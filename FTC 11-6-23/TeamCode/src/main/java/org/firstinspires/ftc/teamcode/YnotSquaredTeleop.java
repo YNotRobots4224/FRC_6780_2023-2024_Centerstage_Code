@@ -60,7 +60,7 @@ import org.firstinspires.ftc.vision.tfod.TfodProcessor;
 //@Disabled
 public class YnotSquaredTeleop extends OpMode {
 
-    /* Declare OpMode members. */
+    // Declare OpMode members.
     public DcMotor frontLeftMotor = null;
     public DcMotor frontRightMotor = null;
     public DcMotor backLeftMotor = null;
@@ -69,6 +69,7 @@ public class YnotSquaredTeleop extends OpMode {
     public DcMotor rightWinchMotor = null;
     public DcMotor leftWinchMotor = null;
     public DcMotor intakeMotor = null;
+    
     public Servo bucketServo = null;
     public Servo droneServo = null;
 
@@ -91,51 +92,10 @@ public class YnotSquaredTeleop extends OpMode {
 
 
     /*
-        ###################################################################################################################################################################
-        ################################################################# EDIT THINGS HERE ################################################################################
-        ###################################################################################################################################################################
-    */
-    // CONST variables.
-    public final double MAX_ELEVATOR_POWER = 1;
-    public final double SLOW_ELEVATOR_POWER = 0.5;
-
-    public final double MOVEMENT_SPEED = 0.75;
-
-    public final double BUCKET_UP_POSITION = 0.625;
-    public final double BUCKET_DOWN_POSITION = 0.85;
-
-
-    private  MotorPositions motorPositions;
-
-    /*
      * Code to run ONCE when the driver hits INIT
      */
     @Override
     public void init() {
-        double test = MotorPositions.MOVEMENT_SPEED;
-        /*VisionPortal.Builder builder = new VisionPortal.Builder();
-
-        builder.setCamera(hardwareMap.get(WebcamName.class, "The eye"));
-        builder.setCameraResolution(new Size(640, 480));
-
-// Enable the RC preview (LiveView).  Set "false" to omit camera monitoring.
-        builder.enableLiveView(true);
-
-// Set the stream format; MJPEG uses less bandwidth than default YUY2.
-        builder.setStreamFormat(VisionPortal.StreamFormat.YUY2);
-
-        // Choose whether or not LiveView stops if no processors are enabled.
-        // If set "true", monitor shows solid orange screen if no processors enabled.
-        // If set "false", monitor shows camera view without annotations.
-        builder.setAutoStopLiveView(false);
-
-        // Build the Vision Portal, using the above settings.
-        VisionPortal visionPortal = builder.build();
-*/
-
-
-
-
 
         // Define and Inited, most robots need the motor on one side to be ralize Motors
         frontLeftMotor = hardwareMap.get(DcMotor.class, "front_left");
@@ -175,10 +135,6 @@ public class YnotSquaredTeleop extends OpMode {
         rightWinchMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         elevatorMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
-        // If there are encoders connected, switch to RUN_USING_ENCODER mode for greater accuracy
-        // leftDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        // rightDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-
         // Define and initialize ALL installed servos.
         bucketServo = hardwareMap.get(Servo.class, "bucket");
         droneServo = hardwareMap.get(Servo.class, "drone");
@@ -201,8 +157,8 @@ public class YnotSquaredTeleop extends OpMode {
     @Override
     public void start() {
         targetElevatorPosition = 150;
-        bucketServo.setPosition(BUCKET_UP_POSITION);
-        droneServo.setPosition(0.7);
+        bucketServo.setPosition(MotorPositions.BUCKET_UP_POSITION);
+        droneServo.setPosition(MotorPositions.DRONE_START_POSITION);
     }
 
     /*
@@ -263,9 +219,9 @@ public class YnotSquaredTeleop extends OpMode {
     private void RunDriver1Code()
     {
         if (isEncoderDriverDriving) {
-            double leftStickY = -gamepad1.left_stick_y * MOVEMENT_SPEED; // Remember, Y stick value is reversed
-            double leftStickX = gamepad1.left_stick_x * 1.1 * MOVEMENT_SPEED; // Counteract imperfect strafing
-            double rightStickX = gamepad1.right_stick_x * MOVEMENT_SPEED;
+            double leftStickY = -gamepad1.left_stick_y * MotorPositions.MOVEMENT_SPEED; // Remember, Y stick value is reversed
+            double leftStickX = gamepad1.left_stick_x * 1.1 * MotorPositions.MOVEMENT_SPEED; // Counteract imperfect strafing
+            double rightStickX = gamepad1.right_stick_x * MotorPositions.MOVEMENT_SPEED;
 
             // Denominator is the largest motor power (absolute value) or 1
             // This ensures all the powers maintain the same ratio,
@@ -283,49 +239,49 @@ public class YnotSquaredTeleop extends OpMode {
 
             // Use gamepad left & right Bumpers to open and close the claw
             if (gamepad1.y)
-                bucketServo.setPosition(BUCKET_UP_POSITION);
+                bucketServo.setPosition(MotorPositions.BUCKET_UP_POSITION);
             else if (gamepad1.x)
-                bucketServo.setPosition(BUCKET_DOWN_POSITION);
+                bucketServo.setPosition(MotorPositions.BUCKET_DOWN_POSITION);
 
 
-            if (leftWinchMotor.getCurrentPosition() > 500) {
+            if (leftWinchMotor.getCurrentPosition() > MotorPositions.WINCH_UP_POSITION - 100) {
                 if (gamepad1.dpad_down) // In
                 {
-                    targetElevatorPosition = 150;
-                    bucketServo.setPosition(BUCKET_UP_POSITION);
-                    elevatorPower = MAX_ELEVATOR_POWER;
+                    targetElevatorPosition = MotorPositions.ELEVATOR_IN_POSITION;
+                    bucketServo.setPosition(MotorPositions.BUCKET_UP_POSITION);
+                    elevatorPower = MotorPositions.MAX_ELEVATOR_POWER;
                 } else if (gamepad1.dpad_left) // little out
                 {
-                    targetElevatorPosition = 2000;
-                    elevatorPower = MAX_ELEVATOR_POWER;
+                    targetElevatorPosition = MotorPositions.ELEVATOR_OUT1_POSITION;
+                    elevatorPower = MotorPositions.MAX_ELEVATOR_POWER;
                 } else if (gamepad1.dpad_up) // mid out
                 {
-                    targetElevatorPosition = 3000;
-                    elevatorPower = MAX_ELEVATOR_POWER;
+                    targetElevatorPosition = MotorPositions.ELEVATOR_OUT2_POSITION;
+                    elevatorPower = MotorPositions.MAX_ELEVATOR_POWER;
                 } else if (gamepad1.dpad_right) // Far out
                 {
-                    targetElevatorPosition = 4300;
-                    elevatorPower = MAX_ELEVATOR_POWER;
+                    targetElevatorPosition = MotorPositions.ELEVATOR_OUT3_POSITION;
+                    elevatorPower = MotorPositions.MAX_ELEVATOR_POWER;
                 }
             }
 
 
             if (gamepad1.left_trigger > 0.5) {
-                targetElevatorPosition = 4300;
-                bucketServo.setPosition(BUCKET_UP_POSITION);
-                elevatorPower = SLOW_ELEVATOR_POWER;
+                targetElevatorPosition = MotorPositions.ELEVATOR_OUT3_POSITION;
+                bucketServo.setPosition(MotorPositions.BUCKET_UP_POSITION);
+                elevatorPower = MotorPositions.SLOW_ELEVATOR_POWER;
             }
 
             if (gamepad1.b) {
-                droneServo.setPosition(0.6);
+                droneServo.setPosition(MotorPositions.DRONE_LAUNCH_POSITION);
             }
 
-            if (elevatorMotor.getCurrentPosition() < 500) {
+            if (elevatorMotor.getCurrentPosition() < MotorPositions.ELEVATOR_IN_POSITION + 100) {
                 // Use Right trigger and bumper to use the winch
                 if (gamepad1.right_trigger > 0.5) {
-                    targetWinchPosition = 650;
+                    targetWinchPosition = MotorPositions.WINCH_UP_POSITION;
                 } else if (gamepad1.right_bumper) {
-                    targetWinchPosition = 350;
+                    targetWinchPosition = MotorPositions.WINCH_HOVER_POSITION;
                 }
             }
 
@@ -361,7 +317,7 @@ public class YnotSquaredTeleop extends OpMode {
                 // Turn On RUN_TO_POSITION
                 elevatorMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
-                elevatorMotor.setPower(1);
+                elevatorMotor.setPower(elevatorPower);
 
                 if (!elevatorMotor.isBusy()) {
                     // Stop all motion;
@@ -379,15 +335,15 @@ public class YnotSquaredTeleop extends OpMode {
                         // turn intake off
                         intakeMotor.setPower(0);
                         isIntakeOn = false;
-                        if (targetWinchPosition != 630) {
-                            targetWinchPosition = 350;
+                        if (targetWinchPosition != MotorPositions.WINCH_UP_POSITION) {
+                            targetWinchPosition = MotorPositions.WINCH_HOVER_POSITION;
                         }
                     } else {
                         // turn intake on
                         intakeMotor.setPower(0.75);
                         isIntakeOn = true;
-                        if (targetWinchPosition != 630) {
-                            targetWinchPosition = 200;
+                        if (targetWinchPosition != MotorPositions.WINCH_UP_POSITION) {
+                            targetWinchPosition = MotorPositions.WINCH_DOWN_POSITION;
                         }
                     }
                     isIntakePressed = true;
@@ -400,9 +356,9 @@ public class YnotSquaredTeleop extends OpMode {
     private  void RunDriver2Code()
     {
         if (!isEncoderDriverDriving) {
-            double leftStickY = -gamepad1.left_stick_y * MOVEMENT_SPEED; // Remember, Y stick value is reversed
-            double leftStickX = gamepad1.left_stick_x * 1.1 * MOVEMENT_SPEED; // Counteract imperfect strafing
-            double rightStickX = gamepad1.right_stick_x * MOVEMENT_SPEED;
+            double leftStickY = -gamepad1.left_stick_y * MotorPositions.MOVEMENT_SPEED; // Remember, Y stick value is reversed
+            double leftStickX = gamepad1.left_stick_x * 1.1 * MotorPositions.MOVEMENT_SPEED; // Counteract imperfect strafing
+            double rightStickX = gamepad1.right_stick_x * MotorPositions.MOVEMENT_SPEED;
 
             // Denominator is the largest motor power (absolute value) or 1
             // This ensures all the powers maintain the same ratio,
@@ -420,12 +376,12 @@ public class YnotSquaredTeleop extends OpMode {
 
             // Use gamepad left & right Bumpers to open and close the claw
             if (gamepad2.y)
-                bucketServo.setPosition(BUCKET_UP_POSITION);
+                bucketServo.setPosition(MotorPositions.BUCKET_UP_POSITION);
             else if (gamepad2.x)
-                bucketServo.setPosition(BUCKET_DOWN_POSITION);
+                bucketServo.setPosition(MotorPositions.BUCKET_DOWN_POSITION);
 
             if (gamepad2.b) {
-                droneServo.setPosition(0.6);
+                droneServo.setPosition(MotorPositions.DRONE_LAUNCH_POSITION);
             }
 
             if (gamepad2.right_trigger > 0.5)

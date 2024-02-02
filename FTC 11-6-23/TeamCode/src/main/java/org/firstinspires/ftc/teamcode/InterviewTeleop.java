@@ -51,11 +51,7 @@ import com.qualcomm.robotcore.hardware.Servo;
 //@Disabled
 public class InterviewTeleop extends OpMode {
 
-    /* Declare OpMode members. */
-    public DcMotor frontLeftMotor = null;
-    public DcMotor frontRightMotor = null;
-    public DcMotor backLeftMotor = null;
-    public DcMotor backRightMotor = null;
+    // Declare OpMode members.
     public DcMotor elevatorMotor = null;
     public DcMotor rightWinchMotor = null;
     public DcMotor leftWinchMotor = null;
@@ -64,6 +60,8 @@ public class InterviewTeleop extends OpMode {
     public Servo droneServo = null;
 
 
+    // Drivers
+    private boolean isEncoderDriverDriving = true;
 
     // Intake
     public boolean isIntakeOn = false;
@@ -79,50 +77,13 @@ public class InterviewTeleop extends OpMode {
 
 
 
-
     /*
-        ###################################################################################################################################################################
-        ################################################################# EDIT THINGS HERE ################################################################################
-        ###################################################################################################################################################################
+    * Code to run ONCE when the driver hits INIT
     */
-    // CONST variables.
-    public final double MAX_ELEVATOR_POWER = 1;
-    public final double SLOW_ELEVATOR_POWER = 0.5;
-
-    public final double BUCKET_UP_POSITION = 0.4;
-    public final double BUCKET_DOWN_POSITION = 0.65;
-
-
-    /*
-     * Code to run ONCE when the driver hits INIT
-     */
     @Override
     public void init() {
-        /*VisionPortal.Builder builder = new VisionPortal.Builder();
 
-        builder.setCamera(hardwareMap.get(WebcamName.class, "The eye"));
-        builder.setCameraResolution(new Size(640, 480));
-
-// Enable the RC preview (LiveView).  Set "false" to omit camera monitoring.
-        builder.enableLiveView(true);
-
-// Set the stream format; MJPEG uses less bandwidth than default YUY2.
-        builder.setStreamFormat(VisionPortal.StreamFormat.YUY2);
-
-        // Choose whether or not LiveView stops if no processors are enabled.
-        // If set "true", monitor shows solid orange screen if no processors enabled.
-        // If set "false", monitor shows camera view without annotations.
-        builder.setAutoStopLiveView(false);
-
-        // Build the Vision Portal, using the above settings.
-        VisionPortal visionPortal = builder.build();
-*/
-
-
-        frontLeftMotor = hardwareMap.get(DcMotor.class, "front_left");
-        frontRightMotor = hardwareMap.get(DcMotor.class, "front_right");
-        backRightMotor = hardwareMap.get(DcMotor.class, "back_right");
-        backLeftMotor = hardwareMap.get(DcMotor.class, "back_left");
+        // Define and Inited, most robots need the motor on one side to be ralize Motors
         elevatorMotor = hardwareMap.get(DcMotor.class, "elevator");
         leftWinchMotor = hardwareMap.get(DcMotor.class, "left_winch");
         rightWinchMotor = hardwareMap.get(DcMotor.class, "right_winch");
@@ -156,178 +117,40 @@ public class InterviewTeleop extends OpMode {
         rightWinchMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         elevatorMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
-        // If there are encoders connected, switch to RUN_USING_ENCODER mode for greater accuracy
-        // leftDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        // rightDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-
         // Define and initialize ALL installed servos.
         bucketServo = hardwareMap.get(Servo.class, "bucket");
         droneServo = hardwareMap.get(Servo.class, "drone");
+
 
         // Send telemetry message to signify robot waiting;
         telemetry.addData(">", "Robot Ready.  Press Play.");    //
     }
 
     /*
-     * Code to run REPEATEDLY after the driver hits INIT, but before they hit PLAY
-     */
+    * Code to run REPEATEDLY after the driver hits INIT, but before they hit PLAY
+    */
     @Override
     public void init_loop() {
     }
 
     /*
-     * Code to run ONCE when the driver hits PLAY
-     */
+    * Code to run ONCE when the driver hits PLAY
+    */
     @Override
     public void start() {
         targetElevatorPosition = 150;
-        bucketServo.setPosition(BUCKET_UP_POSITION);
-        droneServo.setPosition(0.7);
+        bucketServo.setPosition(MotorPositions.BUCKET_UP_POSITION);
+        droneServo.setPosition(MotorPositions.DRONE_START_POSITION);
     }
 
     /*
-     * Code to run REPEATEDLY after the driver hits PLAY but before they hit STOP
-     */
+    * Code to run REPEATEDLY after the driver hits PLAY but before they hit STOP
+    */
     @Override
     public void loop() {
-        double leftStickY = -gamepad1.left_stick_y; // Remember, Y stick value is reversed
-        double leftStickX = gamepad1.left_stick_x * 1.1; // Counteract imperfect strafing
-        double rightStickX = gamepad1.right_stick_x;
 
-        // Denominator is the largest motor power (absolute value) or 1
-        // This ensures all the powers maintain the same ratio,
-        // but only if at least one is out of the range [-1, 1]
-        double denominator = Math.max(Math.abs(leftStickY) + Math.abs(leftStickX) + Math.abs(rightStickX), 1);
-        double frontLeftPower = (leftStickY + leftStickX + rightStickX) / denominator;
-        double backLeftPower = (leftStickY - leftStickX + rightStickX) / denominator;
-        double frontRightPower = (leftStickY - leftStickX - rightStickX) / denominator;
-        double backRightPower = (leftStickY + leftStickX - rightStickX) / denominator;
+        RunDriver1Code();
 
-        frontLeftMotor.setPower(frontLeftPower);
-        backLeftMotor.setPower(backLeftPower);
-        frontRightMotor.setPower(frontRightPower);
-        backRightMotor.setPower(backRightPower);
-
-
-
-
-        // Use gamepad left & right Bumpers to open and close the claw
-        if (gamepad1.y)
-            bucketServo.setPosition(BUCKET_UP_POSITION);
-        else if (gamepad1.x)
-            bucketServo.setPosition(BUCKET_DOWN_POSITION);
-
-
-        if (leftWinchMotor.getCurrentPosition() > 500) {
-            if (gamepad1.dpad_down) // In
-            {
-                targetElevatorPosition = 150;
-                bucketServo.setPosition(BUCKET_UP_POSITION);
-                elevatorPower = MAX_ELEVATOR_POWER;
-            } else if (gamepad1.dpad_left) // little out
-            {
-                targetElevatorPosition = 2000;
-                elevatorPower = MAX_ELEVATOR_POWER;
-            } else if (gamepad1.dpad_up) // mid out
-            {
-                targetElevatorPosition = 3000;
-                elevatorPower = MAX_ELEVATOR_POWER;
-            } else if (gamepad1.dpad_right) // Far out
-            {
-                targetElevatorPosition = 4300;
-                elevatorPower = MAX_ELEVATOR_POWER;
-            }
-        }
-
-
-        if (gamepad1.left_trigger > 0.5)
-        {
-            targetElevatorPosition = 4300;
-            bucketServo.setPosition(BUCKET_UP_POSITION);
-            elevatorPower = SLOW_ELEVATOR_POWER;
-        }
-
-        if (gamepad1.b)
-        {
-            droneServo.setPosition(0.6);
-        }
-
-        if (elevatorMotor.getCurrentPosition() < 500) {
-            // Use Right trigger and bumper to use the winch
-            if (gamepad1.right_trigger > 0.5) {
-                targetWinchPosition = 650;
-            } else if (gamepad1.right_bumper) {
-                targetWinchPosition = 350;
-            }
-        }
-
-        // Winch Movement
-        {
-            // Determine new target position, and pass to motor controller
-            leftWinchMotor.setTargetPosition(targetWinchPosition);
-            rightWinchMotor.setTargetPosition(targetWinchPosition);
-
-            // Turn On RUN_TO_POSITION
-            leftWinchMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-            rightWinchMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-
-            leftWinchMotor.setPower(0.5);
-            rightWinchMotor.setPower(0.5);
-
-            if (!leftWinchMotor.isBusy()) {
-                // Stop all motion;
-                leftWinchMotor.setPower(0);
-                rightWinchMotor.setPower(0);
-
-                // Turn off RUN_TO_POSITION
-                leftWinchMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-                rightWinchMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-            }
-        }
-
-        // Elevator Movement
-        {
-            // Determine new target position, and pass to motor controller
-            elevatorMotor.setTargetPosition(targetElevatorPosition);
-
-            // Turn On RUN_TO_POSITION
-            elevatorMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-
-            elevatorMotor.setPower(1);
-
-            if (!elevatorMotor.isBusy()) {
-                // Stop all motion;
-                elevatorMotor.setPower(0);
-
-                // Turn off RUN_TO_POSITION
-                elevatorMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-            }
-        }
-
-
-        if (gamepad1.a && elevatorMotor.getCurrentPosition() < 200) {
-            if (!isIntakePressed) {
-                if (isIntakeOn) {
-                    // turn intake off
-                    intakeMotor.setPower(0);
-                    isIntakeOn = false;
-                    if (targetWinchPosition != 630) {
-                        targetWinchPosition = 350;
-                    }
-                } else {
-                    // turn intake on
-                    intakeMotor.setPower(0.75);
-                    isIntakeOn = true;
-                    if (targetWinchPosition != 630) {
-                        targetWinchPosition = 200;
-                    }
-                }
-                isIntakePressed = true;
-            }
-        } else
-            isIntakePressed = false;
-
-        // Send telemetry message to signify robot running;
         telemetry.addData("Winchs Running to", "%.2f", (double) targetWinchPosition);
         telemetry.addData("left Winch Currently at", "%.2f", (double) leftWinchMotor.getCurrentPosition());
         telemetry.addData("right Winch Currently at", "%.2f", (double) rightWinchMotor.getCurrentPosition());
@@ -339,10 +162,205 @@ public class InterviewTeleop extends OpMode {
     }
 
     /*
-     * Code to run ONCE after the driver hits STOP
-     */
+    * Code to run ONCE after the driver hits STOP
+    */
     @Override
     public void stop() {
+    }
+
+
+    private  void DetermainDriver()
+    {
+        if (gamepad1.start)
+        {
+            isEncoderDriverDriving = true;
+
+            // ENCODER
+            leftWinchMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+            leftWinchMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
+            rightWinchMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+            rightWinchMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
+            elevatorMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+            elevatorMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        }
+        else if (gamepad2.start)
+        {
+            isEncoderDriverDriving = true;
+
+
+            leftWinchMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+
+            rightWinchMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+
+            elevatorMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        }
+    }
+
+    private void RunDriver1Code()
+    {
+        if (isEncoderDriverDriving) {
+
+            // Use gamepad left & right Bumpers to open and close the claw
+            if (gamepad1.y)
+                bucketServo.setPosition(MotorPositions.BUCKET_UP_POSITION);
+            else if (gamepad1.x)
+                bucketServo.setPosition(MotorPositions.BUCKET_DOWN_POSITION);
+
+
+            if (leftWinchMotor.getCurrentPosition() > MotorPositions.WINCH_UP_POSITION - 100) {
+                if (gamepad1.dpad_down) // In
+                {
+                    targetElevatorPosition = MotorPositions.ELEVATOR_IN_POSITION;
+                    bucketServo.setPosition(MotorPositions.BUCKET_UP_POSITION);
+                    elevatorPower = MotorPositions.MAX_ELEVATOR_POWER;
+                } else if (gamepad1.dpad_left) // little out
+                {
+                    targetElevatorPosition = MotorPositions.ELEVATOR_OUT1_POSITION;
+                    elevatorPower = MotorPositions.MAX_ELEVATOR_POWER;
+                } else if (gamepad1.dpad_up) // mid out
+                {
+                    targetElevatorPosition = MotorPositions.ELEVATOR_OUT2_POSITION;
+                    elevatorPower = MotorPositions.MAX_ELEVATOR_POWER;
+                } else if (gamepad1.dpad_right) // Far out
+                {
+                    targetElevatorPosition = MotorPositions.ELEVATOR_OUT3_POSITION;
+                    elevatorPower = MotorPositions.MAX_ELEVATOR_POWER;
+                }
+            }
+
+
+            if (gamepad1.left_trigger > 0.5) {
+                targetElevatorPosition = MotorPositions.ELEVATOR_OUT3_POSITION;
+                bucketServo.setPosition(MotorPositions.BUCKET_UP_POSITION);
+                elevatorPower = MotorPositions.SLOW_ELEVATOR_POWER;
+            }
+
+            if (gamepad1.b) {
+                droneServo.setPosition(MotorPositions.DRONE_LAUNCH_POSITION);
+            }
+
+            if (elevatorMotor.getCurrentPosition() < MotorPositions.ELEVATOR_IN_POSITION + 100) {
+                // Use Right trigger and bumper to use the winch
+                if (gamepad1.right_trigger > 0.5) {
+                    targetWinchPosition = MotorPositions.WINCH_UP_POSITION;
+                } else if (gamepad1.right_bumper) {
+                    targetWinchPosition = MotorPositions.WINCH_HOVER_POSITION;
+                }
+            }
+
+            // Winch Movement
+            {
+                // Determine new target position, and pass to motor controller
+                leftWinchMotor.setTargetPosition(targetWinchPosition);
+                rightWinchMotor.setTargetPosition(targetWinchPosition);
+
+                // Turn On RUN_TO_POSITION
+                leftWinchMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                rightWinchMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+
+                leftWinchMotor.setPower(0.5);
+                rightWinchMotor.setPower(0.5);
+
+                if (!leftWinchMotor.isBusy()) {
+                    // Stop all motion;
+                    leftWinchMotor.setPower(0);
+                    rightWinchMotor.setPower(0);
+
+                    // Turn off RUN_TO_POSITION
+                    leftWinchMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+                    rightWinchMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+                }
+            }
+
+            // Elevator Movement
+            {
+                // Determine new target position, and pass to motor controller
+                elevatorMotor.setTargetPosition(targetElevatorPosition);
+
+                // Turn On RUN_TO_POSITION
+                elevatorMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+
+                elevatorMotor.setPower(elevatorPower);
+
+                if (!elevatorMotor.isBusy()) {
+                    // Stop all motion;
+                    elevatorMotor.setPower(0);
+
+                    // Turn off RUN_TO_POSITION
+                    elevatorMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+                }
+            }
+
+
+            if (gamepad1.a && elevatorMotor.getCurrentPosition() < 200) {
+                if (!isIntakePressed) {
+                    if (isIntakeOn) {
+                        // turn intake off
+                        intakeMotor.setPower(0);
+                        isIntakeOn = false;
+                        if (targetWinchPosition != MotorPositions.WINCH_UP_POSITION) {
+                            targetWinchPosition = MotorPositions.WINCH_HOVER_POSITION;
+                        }
+                    } else {
+                        // turn intake on
+                        intakeMotor.setPower(0.75);
+                        isIntakeOn = true;
+                        if (targetWinchPosition != MotorPositions.WINCH_UP_POSITION) {
+                            targetWinchPosition = MotorPositions.WINCH_DOWN_POSITION;
+                        }
+                    }
+                    isIntakePressed = true;
+                }
+            } else
+                isIntakePressed = false;
+        }
+    }
+
+    private  void RunDriver2Code()
+    {
+        if (!isEncoderDriverDriving) {
+
+            // Use gamepad left & right Bumpers to open and close the claw
+            if (gamepad2.y)
+                bucketServo.setPosition(MotorPositions.BUCKET_UP_POSITION);
+            else if (gamepad2.x)
+                bucketServo.setPosition(MotorPositions.BUCKET_DOWN_POSITION);
+
+            if (gamepad2.b) {
+                droneServo.setPosition(MotorPositions.DRONE_LAUNCH_POSITION);
+            }
+
+            if (gamepad2.right_trigger > 0.5)
+            {
+                leftWinchMotor.setPower(1);
+                rightWinchMotor.setPower(1);
+            }
+            if (gamepad2.right_bumper)
+            {
+                leftWinchMotor.setPower(-1);
+                rightWinchMotor.setPower(-1);
+            }
+
+            if (gamepad2.left_trigger > 0.5)
+            {
+                elevatorMotor.setPower(gamepad2.left_trigger);
+            }
+            if (gamepad2.left_bumper)
+            {
+                elevatorMotor.setPower(-1);
+            }
+
+            if (gamepad2.a)
+            {
+                intakeMotor.setPower(1);
+            }
+            else
+            {
+                intakeMotor.setPower(-1);
+            }
+        }
     }
 
 }

@@ -237,6 +237,7 @@ public class ScoreParkRightRedFar extends LinearOpMode {
         sleep(30000);
     }
 
+    
     private void MoveRobot(double movementX, double movementZ, double rotationY)
     {
         // Denominator is the largest motor power (absolute value) or 1
@@ -253,24 +254,29 @@ public class ScoreParkRightRedFar extends LinearOpMode {
         frontRightMotor.setPower(frontRightPower);
         backRightMotor.setPower(backRightPower);
     }
-    public void MoveWinch(int targetWinchPosition) {
+    private void MoveWinch(int targetWinchPosition) {
         // Determine new target position, and pass to motor controller
-        winchMotor.setTargetPosition(targetWinchPosition);
+        rightWinchMotor.setTargetPosition(targetWinchPosition);
+        leftWinchMotor.setTargetPosition(targetWinchPosition);
 
         // Turn On RUN_TO_POSITION
-        winchMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        rightWinchMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        leftWinchMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
-        winchMotor.setPower(winchPower);
+        rightWinchMotor.setPower(MotorPositions.WINCH_POWER);
+        leftWinchMotor.setPower(MotorPositions.WINCH_POWER);
 
-        if (!winchMotor.isBusy()) {
+        if (!leftWinchMotor.isBusy()) {
             // Stop all motion;
-            winchMotor.setPower(0);
+            rightWinchMotor.setPower(0);
+            leftWinchMotor.setPower(0);
 
             // Turn off RUN_TO_POSITION
-            winchMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+            rightWinchMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+            leftWinchMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         }
     }
-    public void MoveElevator(int targetElevatorPosition) {
+    private void MoveElevator(int targetElevatorPosition) {
         // Determine new target position, and pass to motor controller
         elevatorMotor.setTargetPosition(targetElevatorPosition);
 
@@ -287,4 +293,5 @@ public class ScoreParkRightRedFar extends LinearOpMode {
             elevatorMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         }
     }
+    
 }

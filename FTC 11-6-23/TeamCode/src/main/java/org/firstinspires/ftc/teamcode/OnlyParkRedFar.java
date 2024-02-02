@@ -58,22 +58,23 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 //@Disabled
 public class OnlyParkRedFar extends LinearOpMode {
 
+    
     /* Declare OpMode members. */
     public DcMotor frontLeftMotor = null;
     public DcMotor frontRightMotor = null;
     public DcMotor backLeftMotor = null;
     public DcMotor backRightMotor = null;
-    public DcMotor winchMotor = null;
+
+    public DcMotor rightWinchMotor = null;
+    public DcMotor leftWinchMotor = null;
+
     public Servo bucketServo = null;
+
+
 
     private ElapsedTime     runtime = new ElapsedTime();
 
 
-    static final double     FORWARD_SPEED = 0.6;
-    static final double     TURN_SPEED    = 0.5;
-
-
-    public double winchPower = 0.5;
 
     @Override
     public void runOpMode() {
@@ -83,7 +84,14 @@ public class OnlyParkRedFar extends LinearOpMode {
         frontRightMotor = hardwareMap.get(DcMotor.class, "front_right");
         backRightMotor = hardwareMap.get(DcMotor.class, "back_right");
         backLeftMotor = hardwareMap.get(DcMotor.class, "back_left");
-        winchMotor = hardwareMap.get(DcMotor.class, "left_winch");
+
+        leftWinchMotor = hardwareMap.get(DcMotor.class, "left_winch");
+        rightWinchMotor = hardwareMap.get(DcMotor.class, "right_winch");
+        
+        bucketServo = hardwareMap.get(Servo.class, "bucket");
+
+        bucketServo.setPosition(MotorPositions.BUCKET_UP_POSITION);
+
 
         // To drive forwareversed, because the axles point in opposite directions.
         // Pushing the left and right sticks forward MUST make robot go forward. So adjust these two lines based on your first test drive.
@@ -92,12 +100,16 @@ public class OnlyParkRedFar extends LinearOpMode {
         frontRightMotor.setDirection(DcMotor.Direction.FORWARD);
         backLeftMotor.setDirection(DcMotor.Direction.REVERSE);
         backRightMotor.setDirection(DcMotor.Direction.FORWARD);
-        winchMotor.setDirection(DcMotor.Direction.REVERSE);
+        leftWinchMotor.setDirection(DcMotor.Direction.REVERSE);
 
-        // ENCODER
-        winchMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        winchMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        winchMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+
+        leftWinchMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        leftWinchMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        leftWinchMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        
+        rightWinchMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        rightWinchMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        rightWinchMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
 
         // Send telemetry message to signify robot waiting;
@@ -110,7 +122,7 @@ public class OnlyParkRedFar extends LinearOpMode {
 
         runtime.reset();
 
-        MoveWinch(400);
+        MoveWinch(MotorPositions.WINCH_HOVER_POSITION);
 
         while (runtime.seconds() < 15)
         {
@@ -148,9 +160,7 @@ public class OnlyParkRedFar extends LinearOpMode {
         frontRightMotor.setPower(0);
         backRightMotor.setPower(0);
 
-
-        winchPower = 0.2;
-        MoveWinch(50);
+        MoveWinch(0);
 
 
         sleep(30000);
@@ -175,20 +185,25 @@ public class OnlyParkRedFar extends LinearOpMode {
 
     public void MoveWinch(int targetWinchPosition) {
         // Determine new target position, and pass to motor controller
-        winchMotor.setTargetPosition(targetWinchPosition);
+        rightWinchMotor.setTargetPosition(targetWinchPosition);
+        leftWinchMotor.setTargetPosition(targetWinchPosition);
 
         // Turn On RUN_TO_POSITION
-        winchMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        rightWinchMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        leftWinchMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
-        winchMotor.setPower(winchPower);
+        rightWinchMotor.setPower(MotorPositions.WINCH_POWER);
+        leftWinchMotor.setPower(MotorPositions.WINCH_POWER);
 
-        if (!winchMotor.isBusy()) {
+        if (!leftWinchMotor.isBusy()) {
             // Stop all motion;
-            winchMotor.setPower(0);
+            rightWinchMotor.setPower(0);
+            leftWinchMotor.setPower(0);
 
             // Turn off RUN_TO_POSITION
-            winchMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+            rightWinchMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+            leftWinchMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         }
     }
-
+    
 }

@@ -65,10 +65,12 @@ public class ScoreParkLeftRedFar extends LinearOpMode {
     public DcMotor backLeftMotor = null;
     public DcMotor backRightMotor = null;
 
-
     public DcMotor elevatorMotor = null;
-    public DcMotor winchMotor = null;
-    public DcMotor intakeMotor = null;
+    
+    public DcMotor rightWinchMotor = null;
+    public DcMotor leftWinchMotor = null;
+
+    
     public Servo bucketServo = null;
 
 
@@ -83,18 +85,8 @@ public class ScoreParkLeftRedFar extends LinearOpMode {
 
     // Elevator
     public int targetElevatorPosition;
-    public double elevatorPower = 1;
-    public final double MAX_ELEVATOR_POWER = 1;
-    public final double SLOW_ELEVATOR_POWER = 0.5;
+    
 
-
-
-    // CONST variables.
-    public final double MOVEMENT_SPEED = 0.5;
-
-    public final double BUCKET_UP_POSITION = 0.68;
-    public final double BUCKET_DOWN_POSITION = 1;
-    public double winchPower = 0.5;
 
     @Override
     public void runOpMode() {
@@ -106,12 +98,13 @@ public class ScoreParkLeftRedFar extends LinearOpMode {
         backLeftMotor = hardwareMap.get(DcMotor.class, "back_left");
 
         elevatorMotor = hardwareMap.get(DcMotor.class, "elevator");
-        winchMotor = hardwareMap.get(DcMotor.class, "left_winch");
-        intakeMotor = hardwareMap.get(DcMotor.class, "intake");
+        leftWinchMotor = hardwareMap.get(DcMotor.class, "left_winch");
+        rightWinchMotor = hardwareMap.get(DcMotor.class, "right_winch");
+
         bucketServo = hardwareMap.get(Servo.class, "bucket");
 
+        bucketServo.setPosition(MotorPositions.BUCKET_UP_POSITION);
 
-        bucketServo.setPosition(0.4);
 
         // To drive forwareversed, because the axles point in opposite directions.
         // Pushing the left and right sticks forward MUST make robot go forward. So adjust these two lines based on your first test drive.
@@ -124,16 +117,23 @@ public class ScoreParkLeftRedFar extends LinearOpMode {
         elevatorMotor.setDirection(DcMotor.Direction.REVERSE);
 
         // ENCODER
-        winchMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        winchMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        leftWinchMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        leftWinchMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        leftWinchMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        
+        rightWinchMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        rightWinchMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        rightWinchMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+
 
         elevatorMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         elevatorMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-
-
-        // BREAKS
-        winchMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         elevatorMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+
+
+
+
+
 
         // Send telemetry message to signify robot waiting;
         telemetry.addData("Status", "Ready to run");    //
@@ -143,7 +143,7 @@ public class ScoreParkLeftRedFar extends LinearOpMode {
         waitForStart();
 
         runtime.reset();
-        MoveWinch(350);
+        MoveWinch(MotorPositions.WINCH_HOVER_POSITION);
 
         while (runtime.seconds() < 15) {
 
@@ -184,32 +184,28 @@ public class ScoreParkLeftRedFar extends LinearOpMode {
 
         runtime.reset();
         while (runtime.seconds() < 1.5) {
-            MoveWinch(650);
+            MoveWinch(MotorPositions.WINCH_UP_POSITION);
         }
 
         runtime.reset();
         while (runtime.seconds() < 2.5) {
-            MoveElevator(3000);
+            MoveElevator(MotorPositions.ELEVATOR_OUT2_POSITION);
         }
 
         runtime.reset();
         while (runtime.seconds() < 1.25) {
-            bucketServo.setPosition(BUCKET_DOWN_POSITION);
-        }
-
-        runtime.reset();
-        while (runtime.seconds() < 0.5) {
-            bucketServo.setPosition(BUCKET_UP_POSITION);
+            bucketServo.setPosition(MotorPositions.BUCKET_DOWN_POSITION);
         }
 
         runtime.reset();
         while (runtime.seconds() < 2.5) {
+            bucketServo.setPosition(MotorPositions.BUCKET_UP_POSITION);
             MoveElevator(0);
         }
-
+        
         runtime.reset();
         while (runtime.seconds() < 1.5) {
-            MoveWinch(350);
+            MoveWinch(MotorPositions.WINCH_HOVER_POSITION);
         }
 
         runtime.reset();
@@ -226,9 +222,9 @@ public class ScoreParkLeftRedFar extends LinearOpMode {
 
         runtime.reset();
         while (runtime.seconds() < 0.5) {
-            MoveWinch(0);
         }
-
+        
+        MoveWinch(0);
         frontLeftMotor.setPower(0);
         backLeftMotor.setPower(0);
         frontRightMotor.setPower(0);
@@ -237,6 +233,7 @@ public class ScoreParkLeftRedFar extends LinearOpMode {
         sleep(30000);
     }
 
+    
     private void MoveRobot(double movementX, double movementZ, double rotationY)
     {
         // Denominator is the largest motor power (absolute value) or 1
@@ -253,24 +250,29 @@ public class ScoreParkLeftRedFar extends LinearOpMode {
         frontRightMotor.setPower(frontRightPower);
         backRightMotor.setPower(backRightPower);
     }
-    public void MoveWinch(int targetWinchPosition) {
+    private void MoveWinch(int targetWinchPosition) {
         // Determine new target position, and pass to motor controller
-        winchMotor.setTargetPosition(targetWinchPosition);
+        rightWinchMotor.setTargetPosition(targetWinchPosition);
+        leftWinchMotor.setTargetPosition(targetWinchPosition);
 
         // Turn On RUN_TO_POSITION
-        winchMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        rightWinchMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        leftWinchMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
-        winchMotor.setPower(winchPower);
+        rightWinchMotor.setPower(MotorPositions.WINCH_POWER);
+        leftWinchMotor.setPower(MotorPositions.WINCH_POWER);
 
-        if (!winchMotor.isBusy()) {
+        if (!leftWinchMotor.isBusy()) {
             // Stop all motion;
-            winchMotor.setPower(0);
+            rightWinchMotor.setPower(0);
+            leftWinchMotor.setPower(0);
 
             // Turn off RUN_TO_POSITION
-            winchMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+            rightWinchMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+            leftWinchMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         }
     }
-    public void MoveElevator(int targetElevatorPosition) {
+    private void MoveElevator(int targetElevatorPosition) {
         // Determine new target position, and pass to motor controller
         elevatorMotor.setTargetPosition(targetElevatorPosition);
 
@@ -287,4 +289,5 @@ public class ScoreParkLeftRedFar extends LinearOpMode {
             elevatorMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         }
     }
+    
 }
