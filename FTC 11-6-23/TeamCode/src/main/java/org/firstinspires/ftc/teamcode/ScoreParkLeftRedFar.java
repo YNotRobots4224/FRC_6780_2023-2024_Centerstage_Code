@@ -113,7 +113,7 @@ public class ScoreParkLeftRedFar extends LinearOpMode {
         frontRightMotor.setDirection(DcMotor.Direction.FORWARD);
         backLeftMotor.setDirection(DcMotor.Direction.REVERSE);
         backRightMotor.setDirection(DcMotor.Direction.FORWARD);
-        winchMotor.setDirection(DcMotor.Direction.REVERSE);
+        leftWinchMotor.setDirection(DcMotor.Direction.REVERSE);
         elevatorMotor.setDirection(DcMotor.Direction.REVERSE);
 
         // ENCODER
@@ -279,7 +279,7 @@ public class ScoreParkLeftRedFar extends LinearOpMode {
         // Turn On RUN_TO_POSITION
         elevatorMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
-        elevatorMotor.setPower(elevatorPower);
+        elevatorMotor.setPower(0);
 
         if (!elevatorMotor.isBusy()) {
             // Stop all motion;

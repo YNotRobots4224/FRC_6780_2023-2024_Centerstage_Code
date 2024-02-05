@@ -93,10 +93,6 @@ public class InterviewTeleop extends OpMode {
         // To drive forwareversed, because the axles point in opposite directions.
         // Pushing the left and right sticks forward MUST make robot go forward. So adjust these two lines based on your first test drive.
         // Note: The settings here assume direct drive on left and right wheels. Gear Reduction or 90 Deg drives may require direction flips
-        frontLeftMotor.setDirection(DcMotor.Direction.REVERSE);
-        frontRightMotor.setDirection(DcMotor.Direction.FORWARD);
-        backLeftMotor.setDirection(DcMotor.Direction.REVERSE);
-        backRightMotor.setDirection(DcMotor.Direction.FORWARD);
         leftWinchMotor.setDirection(DcMotor.Direction.REVERSE);
         elevatorMotor.setDirection(DcMotor.Direction.REVERSE);
 

@@ -12,7 +12,7 @@ public class MotorPositions
     public static double DRONE_LAUNCH_POSITION = 0.6;
     
 
-    public static int WINCH_POWER = 0.5;
+    public static double WINCH_POWER = 0.5;
     public static int WINCH_DOWN_POSITION = 200;
     public static int WINCH_HOVER_POSITION = 350;
     public static int WINCH_UP_POSITION = 650;

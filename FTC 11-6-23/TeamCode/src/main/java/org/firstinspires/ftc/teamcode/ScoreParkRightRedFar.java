@@ -67,7 +67,8 @@ public class ScoreParkRightRedFar extends LinearOpMode {
 
 
     public DcMotor elevatorMotor = null;
-    public DcMotor winchMotor = null;
+    public DcMotor leftWinchMotor = null;
+    public DcMotor rightWinchMotor = null;
     public DcMotor intakeMotor = null;
     public Servo bucketServo = null;
 
@@ -106,7 +107,8 @@ public class ScoreParkRightRedFar extends LinearOpMode {
         backLeftMotor = hardwareMap.get(DcMotor.class, "back_left");
 
         elevatorMotor = hardwareMap.get(DcMotor.class, "elevator");
-        winchMotor = hardwareMap.get(DcMotor.class, "left_winch");
+        leftWinchMotor = hardwareMap.get(DcMotor.class, "left_winch");
+        rightWinchMotor = hardwareMap.get(DcMotor.class, "right_winch");
         intakeMotor = hardwareMap.get(DcMotor.class, "intake");
         bucketServo = hardwareMap.get(Servo.class, "bucket");
 
@@ -120,20 +122,24 @@ public class ScoreParkRightRedFar extends LinearOpMode {
         frontRightMotor.setDirection(DcMotor.Direction.FORWARD);
         backLeftMotor.setDirection(DcMotor.Direction.REVERSE);
         backRightMotor.setDirection(DcMotor.Direction.FORWARD);
-        winchMotor.setDirection(DcMotor.Direction.REVERSE);
+        leftWinchMotor.setDirection(DcMotor.Direction.REVERSE);
         elevatorMotor.setDirection(DcMotor.Direction.REVERSE);
 
         // ENCODER
-        winchMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        winchMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        leftWinchMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        leftWinchMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        leftWinchMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+
+        rightWinchMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        rightWinchMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        rightWinchMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+
+
 
         elevatorMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         elevatorMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-
-
-        // BREAKS
-        winchMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         elevatorMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+
 
         // Send telemetry message to signify robot waiting;
         telemetry.addData("Status", "Ready to run");    //
