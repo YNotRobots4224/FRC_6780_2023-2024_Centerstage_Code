@@ -99,8 +99,6 @@ public class ScoreParkRightRedClose extends LinearOpMode {
 
         bucketServo = hardwareMap.get(Servo.class, "bucket");
 
-        bucketServo.setPosition(MotorPositions.BUCKET_UP_POSITION);
-
 
         // To drive forwareversed, because the axles point in opposite directions.
         // Pushing the left and right sticks forward MUST make robot go forward. So adjust these two lines based on your first test drive.
@@ -142,7 +140,7 @@ public class ScoreParkRightRedClose extends LinearOpMode {
         MoveWinch(MotorPositions.WINCH_HOVER_POSITION);
 
         while (runtime.seconds() < 2) {
-
+            bucketServo.setPosition(MotorPositions.BUCKET_UP_POSITION);
         }
 
         runtime.reset();
@@ -276,6 +274,7 @@ public class ScoreParkRightRedClose extends LinearOpMode {
         elevatorMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
         elevatorMotor.setPower(1);
+
 
         if (!elevatorMotor.isBusy()) {
             // Stop all motion;

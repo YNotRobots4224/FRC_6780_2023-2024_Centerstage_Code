@@ -166,6 +166,7 @@ public class Inspection extends LinearOpMode {
         backRightMotor.setPower(backRightPower);
     }
     public void MoveWinch(int targetWinchPosition) {
+
         // Determine new target position, and pass to motor controller
         rightWinchMotor.setTargetPosition(targetWinchPosition);
         leftWinchMotor.setTargetPosition(targetWinchPosition);

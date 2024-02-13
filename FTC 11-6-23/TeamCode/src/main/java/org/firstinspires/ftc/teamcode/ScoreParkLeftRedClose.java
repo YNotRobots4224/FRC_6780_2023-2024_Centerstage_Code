@@ -103,7 +103,6 @@ public class ScoreParkLeftRedClose extends LinearOpMode {
 
         bucketServo = hardwareMap.get(Servo.class, "bucket");
 
-        bucketServo.setPosition(MotorPositions.BUCKET_UP_POSITION);
 
 
         // To drive forwareversed, because the axles point in opposite directions.
@@ -120,7 +119,7 @@ public class ScoreParkLeftRedClose extends LinearOpMode {
         leftWinchMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         leftWinchMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         leftWinchMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        
+
         rightWinchMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         rightWinchMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         rightWinchMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
@@ -146,7 +145,7 @@ public class ScoreParkLeftRedClose extends LinearOpMode {
         MoveWinch(MotorPositions.WINCH_HOVER_POSITION);
 
         while (runtime.seconds() < 2) {
-
+            bucketServo.setPosition(MotorPositions.BUCKET_UP_POSITION);
         }
 
         runtime.reset();
@@ -280,6 +279,7 @@ public class ScoreParkLeftRedClose extends LinearOpMode {
         elevatorMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
         elevatorMotor.setPower(1);
+
 
         if (!elevatorMotor.isBusy()) {
             // Stop all motion;

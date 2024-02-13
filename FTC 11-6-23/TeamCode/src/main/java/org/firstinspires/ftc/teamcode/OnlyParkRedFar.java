@@ -85,6 +85,7 @@ public class OnlyParkRedFar extends LinearOpMode {
         backRightMotor = hardwareMap.get(DcMotor.class, "back_right");
         backLeftMotor = hardwareMap.get(DcMotor.class, "back_left");
 
+
         leftWinchMotor = hardwareMap.get(DcMotor.class, "left_winch");
         rightWinchMotor = hardwareMap.get(DcMotor.class, "right_winch");
         

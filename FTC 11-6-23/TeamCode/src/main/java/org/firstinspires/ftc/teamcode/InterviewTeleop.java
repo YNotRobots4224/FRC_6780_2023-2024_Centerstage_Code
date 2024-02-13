@@ -52,10 +52,15 @@ import com.qualcomm.robotcore.hardware.Servo;
 public class InterviewTeleop extends OpMode {
 
     // Declare OpMode members.
+    public DcMotor frontLeftMotor = null;
+    public DcMotor frontRightMotor = null;
+    public DcMotor backLeftMotor = null;
+    public DcMotor backRightMotor = null;
     public DcMotor elevatorMotor = null;
     public DcMotor rightWinchMotor = null;
     public DcMotor leftWinchMotor = null;
     public DcMotor intakeMotor = null;
+
     public Servo bucketServo = null;
     public Servo droneServo = null;
 
@@ -70,6 +75,8 @@ public class InterviewTeleop extends OpMode {
 
     // Winch
     public int targetWinchPosition;
+    public boolean shouldWinchGoFullyUp = false;
+    public boolean isWinchPressed = false;
 
     // Elevator
     public int targetElevatorPosition;
@@ -78,12 +85,16 @@ public class InterviewTeleop extends OpMode {
 
 
     /*
-    * Code to run ONCE when the driver hits INIT
-    */
+     * Code to run ONCE when the driver hits INIT
+     */
     @Override
     public void init() {
 
         // Define and Inited, most robots need the motor on one side to be ralize Motors
+        frontLeftMotor = hardwareMap.get(DcMotor.class, "front_left");
+        frontRightMotor = hardwareMap.get(DcMotor.class, "front_right");
+        backRightMotor = hardwareMap.get(DcMotor.class, "back_right");
+        backLeftMotor = hardwareMap.get(DcMotor.class, "back_left");
         elevatorMotor = hardwareMap.get(DcMotor.class, "elevator");
         leftWinchMotor = hardwareMap.get(DcMotor.class, "left_winch");
         rightWinchMotor = hardwareMap.get(DcMotor.class, "right_winch");
@@ -93,6 +104,10 @@ public class InterviewTeleop extends OpMode {
         // To drive forwareversed, because the axles point in opposite directions.
         // Pushing the left and right sticks forward MUST make robot go forward. So adjust these two lines based on your first test drive.
         // Note: The settings here assume direct drive on left and right wheels. Gear Reduction or 90 Deg drives may require direction flips
+        frontLeftMotor.setDirection(DcMotor.Direction.REVERSE);
+        frontRightMotor.setDirection(DcMotor.Direction.FORWARD);
+        backLeftMotor.setDirection(DcMotor.Direction.REVERSE);
+        backRightMotor.setDirection(DcMotor.Direction.FORWARD);
         leftWinchMotor.setDirection(DcMotor.Direction.REVERSE);
         elevatorMotor.setDirection(DcMotor.Direction.REVERSE);
 
@@ -123,29 +138,32 @@ public class InterviewTeleop extends OpMode {
     }
 
     /*
-    * Code to run REPEATEDLY after the driver hits INIT, but before they hit PLAY
-    */
+     * Code to run REPEATEDLY after the driver hits INIT, but before they hit PLAY
+     */
     @Override
     public void init_loop() {
     }
 
     /*
-    * Code to run ONCE when the driver hits PLAY
-    */
+     * Code to run ONCE when the driver hits PLAY
+     */
     @Override
     public void start() {
-        targetElevatorPosition = 150;
+        targetWinchPosition = MotorPositions.WINCH_HOVER_POSITION;
+        targetElevatorPosition = MotorPositions.ELEVATOR_IN_POSITION;
         bucketServo.setPosition(MotorPositions.BUCKET_UP_POSITION);
         droneServo.setPosition(MotorPositions.DRONE_START_POSITION);
     }
 
     /*
-    * Code to run REPEATEDLY after the driver hits PLAY but before they hit STOP
-    */
+     * Code to run REPEATEDLY after the driver hits PLAY but before they hit STOP
+     */
     @Override
     public void loop() {
 
+        DetermainDriver();
         RunDriver1Code();
+        RunDriver2Code();
 
         telemetry.addData("Winchs Running to", "%.2f", (double) targetWinchPosition);
         telemetry.addData("left Winch Currently at", "%.2f", (double) leftWinchMotor.getCurrentPosition());
@@ -155,11 +173,15 @@ public class InterviewTeleop extends OpMode {
         telemetry.addData("DroneServo", "%.2f", droneServo.getPosition());
         telemetry.addData("Elevator Running to", "%.2f", (double)targetElevatorPosition);
         telemetry.addData("Elevator Currently at", "%.2f", (double) elevatorMotor.getCurrentPosition());
+        int i = 0;
+        if (shouldWinchGoFullyUp) i = 0;
+        else i = 1;
+        telemetry.addData("Should Winch Go fully Up", "%.2f", (double) i);
     }
 
     /*
-    * Code to run ONCE after the driver hits STOP
-    */
+     * Code to run ONCE after the driver hits STOP
+     */
     @Override
     public void stop() {
     }
@@ -183,7 +205,7 @@ public class InterviewTeleop extends OpMode {
         }
         else if (gamepad2.start)
         {
-            isEncoderDriverDriving = true;
+            isEncoderDriverDriving = false;
 
 
             leftWinchMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
@@ -194,8 +216,7 @@ public class InterviewTeleop extends OpMode {
         }
     }
 
-    private void RunDriver1Code()
-    {
+    private void RunDriver1Code() {
         if (isEncoderDriverDriving) {
 
             // Use gamepad left & right Bumpers to open and close the claw
@@ -205,7 +226,7 @@ public class InterviewTeleop extends OpMode {
                 bucketServo.setPosition(MotorPositions.BUCKET_DOWN_POSITION);
 
 
-            if (leftWinchMotor.getCurrentPosition() > MotorPositions.WINCH_UP_POSITION - 100) {
+            if (leftWinchMotor.getCurrentPosition() > MotorPositions.WINCH_HALF_UP_POSITION - 50) {
                 if (gamepad1.dpad_down) // In
                 {
                     targetElevatorPosition = MotorPositions.ELEVATOR_IN_POSITION;
@@ -237,13 +258,26 @@ public class InterviewTeleop extends OpMode {
                 droneServo.setPosition(MotorPositions.DRONE_LAUNCH_POSITION);
             }
 
-            if (elevatorMotor.getCurrentPosition() < MotorPositions.ELEVATOR_IN_POSITION + 100) {
-                // Use Right trigger and bumper to use the winch
-                if (gamepad1.right_trigger > 0.5) {
-                    targetWinchPosition = MotorPositions.WINCH_UP_POSITION;
-                } else if (gamepad1.right_bumper) {
-                    targetWinchPosition = MotorPositions.WINCH_HOVER_POSITION;
+            if (gamepad1.right_trigger > 0.5) {
+                if (!isWinchPressed) {
+                    isWinchPressed = true;
+                    if (shouldWinchGoFullyUp) {
+                        shouldWinchGoFullyUp = false;
+                        targetWinchPosition = MotorPositions.WINCH_UP_POSITION;
+                    } else {
+                        shouldWinchGoFullyUp = true;
+                        targetWinchPosition = MotorPositions.WINCH_HALF_UP_POSITION;
+                    }
                 }
+            } else if (gamepad1.right_bumper) {
+                if (elevatorMotor.getCurrentPosition() < MotorPositions.ELEVATOR_IN_POSITION + 100) {
+                    // Use Right trigger and bumper to use the winch
+                    targetWinchPosition = MotorPositions.WINCH_HOVER_POSITION;
+                    isWinchPressed = false;
+                    shouldWinchGoFullyUp = false;
+                }
+            } else {
+                isWinchPressed = false;
             }
 
             // Winch Movement
@@ -328,24 +362,33 @@ public class InterviewTeleop extends OpMode {
                 droneServo.setPosition(MotorPositions.DRONE_LAUNCH_POSITION);
             }
 
-            if (gamepad2.right_trigger > 0.5)
+            if (gamepad2.right_trigger > 0.3)
             {
-                leftWinchMotor.setPower(1);
-                rightWinchMotor.setPower(1);
+                leftWinchMotor.setPower(gamepad2.right_trigger / 2f);
+                rightWinchMotor.setPower(gamepad2.right_trigger / 2f);
             }
-            if (gamepad2.right_bumper)
+            else if (gamepad2.right_bumper)
             {
-                leftWinchMotor.setPower(-1);
-                rightWinchMotor.setPower(-1);
+                leftWinchMotor.setPower(-0.5);
+                rightWinchMotor.setPower(-0.5);
+            }
+            else
+            {
+                leftWinchMotor.setPower(0);
+                rightWinchMotor.setPower(0);
             }
 
-            if (gamepad2.left_trigger > 0.5)
+            if (gamepad2.left_trigger > 0.25)
             {
                 elevatorMotor.setPower(gamepad2.left_trigger);
             }
-            if (gamepad2.left_bumper)
+            else if (gamepad2.left_bumper)
             {
                 elevatorMotor.setPower(-1);
+            }
+            else
+            {
+                elevatorMotor.setPower(0);
             }
 
             if (gamepad2.a)
@@ -354,9 +397,10 @@ public class InterviewTeleop extends OpMode {
             }
             else
             {
-                intakeMotor.setPower(-1);
+                intakeMotor.setPower(0);
             }
         }
     }
+
 
 }

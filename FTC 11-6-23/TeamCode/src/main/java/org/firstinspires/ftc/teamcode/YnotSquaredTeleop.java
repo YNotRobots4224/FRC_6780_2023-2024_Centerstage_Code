@@ -29,19 +29,10 @@
 
 package org.firstinspires.ftc.teamcode;
 
-import android.util.Size;
-
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Servo;
-import com.qualcomm.robotcore.util.ElapsedTime;
-import com.qualcomm.robotcore.util.Range;
-
-import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
-import org.firstinspires.ftc.vision.VisionPortal;
-import org.firstinspires.ftc.vision.tfod.TfodProcessor;
 
 /*
  * This OpMode executes a Tank Drive control TeleOp a direct drive robot
@@ -84,6 +75,8 @@ public class YnotSquaredTeleop extends OpMode {
 
     // Winch
     public int targetWinchPosition;
+    public boolean shouldWinchGoFullyUp = false;
+    public boolean isWinchPressed = false;
 
     // Elevator
     public int targetElevatorPosition;
@@ -156,7 +149,8 @@ public class YnotSquaredTeleop extends OpMode {
      */
     @Override
     public void start() {
-        targetElevatorPosition = 150;
+        targetWinchPosition = MotorPositions.WINCH_HALF_UP_POSITION;
+        targetElevatorPosition = MotorPositions.ELEVATOR_IN_POSITION;
         bucketServo.setPosition(MotorPositions.BUCKET_UP_POSITION);
         droneServo.setPosition(MotorPositions.DRONE_START_POSITION);
     }
@@ -167,7 +161,9 @@ public class YnotSquaredTeleop extends OpMode {
     @Override
     public void loop() {
 
+        DetermainDriver();
         RunDriver1Code();
+        RunDriver2Code();
 
         telemetry.addData("Winchs Running to", "%.2f", (double) targetWinchPosition);
         telemetry.addData("left Winch Currently at", "%.2f", (double) leftWinchMotor.getCurrentPosition());
@@ -177,6 +173,10 @@ public class YnotSquaredTeleop extends OpMode {
         telemetry.addData("DroneServo", "%.2f", droneServo.getPosition());
         telemetry.addData("Elevator Running to", "%.2f", (double)targetElevatorPosition);
         telemetry.addData("Elevator Currently at", "%.2f", (double) elevatorMotor.getCurrentPosition());
+        int i = 0;
+        if (shouldWinchGoFullyUp) i = 0;
+        else i = 1;
+        telemetry.addData("Should Winch Go fully Up", "%.2f", (double) i);
     }
 
     /*
@@ -205,7 +205,7 @@ public class YnotSquaredTeleop extends OpMode {
         }
         else if (gamepad2.start)
         {
-            isEncoderDriverDriving = true;
+            isEncoderDriverDriving = false;
 
 
             leftWinchMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
@@ -216,8 +216,7 @@ public class YnotSquaredTeleop extends OpMode {
         }
     }
 
-    private void RunDriver1Code()
-    {
+    private void RunDriver1Code() {
         if (isEncoderDriverDriving) {
             double leftStickY = -gamepad1.left_stick_y * MotorPositions.MOVEMENT_SPEED; // Remember, Y stick value is reversed
             double leftStickX = gamepad1.left_stick_x * 1.1 * MotorPositions.MOVEMENT_SPEED; // Counteract imperfect strafing
@@ -244,7 +243,7 @@ public class YnotSquaredTeleop extends OpMode {
                 bucketServo.setPosition(MotorPositions.BUCKET_DOWN_POSITION);
 
 
-            if (leftWinchMotor.getCurrentPosition() > MotorPositions.WINCH_UP_POSITION - 100) {
+            if (leftWinchMotor.getCurrentPosition() > MotorPositions.WINCH_HALF_UP_POSITION - 50) {
                 if (gamepad1.dpad_down) // In
                 {
                     targetElevatorPosition = MotorPositions.ELEVATOR_IN_POSITION;
@@ -276,13 +275,26 @@ public class YnotSquaredTeleop extends OpMode {
                 droneServo.setPosition(MotorPositions.DRONE_LAUNCH_POSITION);
             }
 
-            if (elevatorMotor.getCurrentPosition() < MotorPositions.ELEVATOR_IN_POSITION + 100) {
-                // Use Right trigger and bumper to use the winch
-                if (gamepad1.right_trigger > 0.5) {
-                    targetWinchPosition = MotorPositions.WINCH_UP_POSITION;
-                } else if (gamepad1.right_bumper) {
-                    targetWinchPosition = MotorPositions.WINCH_HOVER_POSITION;
+            if (gamepad1.right_trigger > 0.5) {
+                if (!isWinchPressed) {
+                    isWinchPressed = true;
+                    if (shouldWinchGoFullyUp) {
+                        shouldWinchGoFullyUp = false;
+                        targetWinchPosition = MotorPositions.WINCH_UP_POSITION;
+                    } else {
+                        shouldWinchGoFullyUp = true;
+                        targetWinchPosition = MotorPositions.WINCH_HALF_UP_POSITION;
+                    }
                 }
+            } else if (gamepad1.right_bumper) {
+                if (elevatorMotor.getCurrentPosition() < MotorPositions.ELEVATOR_IN_POSITION + 100) {
+                    // Use Right trigger and bumper to use the winch
+                    targetWinchPosition = MotorPositions.WINCH_HOVER_POSITION;
+                    isWinchPressed = false;
+                    shouldWinchGoFullyUp = false;
+                }
+            } else {
+                isWinchPressed = false;
             }
 
             // Winch Movement
@@ -356,9 +368,9 @@ public class YnotSquaredTeleop extends OpMode {
     private  void RunDriver2Code()
     {
         if (!isEncoderDriverDriving) {
-            double leftStickY = -gamepad1.left_stick_y * MotorPositions.MOVEMENT_SPEED; // Remember, Y stick value is reversed
-            double leftStickX = gamepad1.left_stick_x * 1.1 * MotorPositions.MOVEMENT_SPEED; // Counteract imperfect strafing
-            double rightStickX = gamepad1.right_stick_x * MotorPositions.MOVEMENT_SPEED;
+            double leftStickY = -gamepad2.left_stick_y * MotorPositions.MOVEMENT_SPEED; // Remember, Y stick value is reversed
+            double leftStickX = gamepad2.left_stick_x * 1.1 * MotorPositions.MOVEMENT_SPEED; // Counteract imperfect strafing
+            double rightStickX = gamepad2.right_stick_x * MotorPositions.MOVEMENT_SPEED;
 
             // Denominator is the largest motor power (absolute value) or 1
             // This ensures all the powers maintain the same ratio,
@@ -384,24 +396,33 @@ public class YnotSquaredTeleop extends OpMode {
                 droneServo.setPosition(MotorPositions.DRONE_LAUNCH_POSITION);
             }
 
-            if (gamepad2.right_trigger > 0.5)
+            if (gamepad2.right_trigger > 0.3)
             {
-                leftWinchMotor.setPower(1);
-                rightWinchMotor.setPower(1);
+                leftWinchMotor.setPower(gamepad2.right_trigger / 2f);
+                rightWinchMotor.setPower(gamepad2.right_trigger / 2f);
             }
-            if (gamepad2.right_bumper)
+            else if (gamepad2.right_bumper)
             {
-                leftWinchMotor.setPower(-1);
-                rightWinchMotor.setPower(-1);
+                leftWinchMotor.setPower(-0.5);
+                rightWinchMotor.setPower(-0.5);
+            }
+            else
+            {
+                leftWinchMotor.setPower(0);
+                rightWinchMotor.setPower(0);
             }
 
-            if (gamepad2.left_trigger > 0.5)
+            if (gamepad2.left_trigger > 0.25)
             {
                 elevatorMotor.setPower(gamepad2.left_trigger);
             }
-            if (gamepad2.left_bumper)
+            else if (gamepad2.left_bumper)
             {
                 elevatorMotor.setPower(-1);
+            }
+            else
+            {
+                elevatorMotor.setPower(0);
             }
 
             if (gamepad2.a)
@@ -410,7 +431,7 @@ public class YnotSquaredTeleop extends OpMode {
             }
             else
             {
-                intakeMotor.setPower(-1);
+                intakeMotor.setPower(0);
             }
         }
     }

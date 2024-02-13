@@ -112,9 +112,6 @@ public class ScoreParkRightRedFar extends LinearOpMode {
         intakeMotor = hardwareMap.get(DcMotor.class, "intake");
         bucketServo = hardwareMap.get(Servo.class, "bucket");
 
-
-        bucketServo.setPosition(0.4);
-
         // To drive forwareversed, because the axles point in opposite directions.
         // Pushing the left and right sticks forward MUST make robot go forward. So adjust these two lines based on your first test drive.
         // Note: The settings here assume direct drive on left and right wheels. Gear Reduction or 90 Deg drives may require direction flips
@@ -136,6 +133,7 @@ public class ScoreParkRightRedFar extends LinearOpMode {
 
 
 
+
         elevatorMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         elevatorMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         elevatorMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
@@ -149,10 +147,10 @@ public class ScoreParkRightRedFar extends LinearOpMode {
         waitForStart();
 
         runtime.reset();
-        MoveWinch(350);
+        MoveWinch(MotorPositions.WINCH_HOVER_POSITION);
 
         while (runtime.seconds() < 15) {
-
+            bucketServo.setPosition(MotorPositions.BUCKET_UP_POSITION);
         }
 
         runtime.reset();
@@ -190,22 +188,22 @@ public class ScoreParkRightRedFar extends LinearOpMode {
 
         runtime.reset();
         while (runtime.seconds() < 1.5) {
-            MoveWinch(650);
+            MoveWinch(MotorPositions.WINCH_HALF_UP_POSITION);
         }
 
         runtime.reset();
         while (runtime.seconds() < 2.5) {
-            MoveElevator(3000);
+            MoveElevator(MotorPositions.ELEVATOR_OUT2_POSITION);
         }
 
         runtime.reset();
         while (runtime.seconds() < 1.25) {
-            bucketServo.setPosition(BUCKET_DOWN_POSITION);
+            bucketServo.setPosition(MotorPositions.BUCKET_DOWN_POSITION);
         }
 
         runtime.reset();
         while (runtime.seconds() < 0.5) {
-            bucketServo.setPosition(BUCKET_UP_POSITION);
+            bucketServo.setPosition(MotorPositions.BUCKET_UP_POSITION);
         }
 
         runtime.reset();
@@ -215,7 +213,7 @@ public class ScoreParkRightRedFar extends LinearOpMode {
 
         runtime.reset();
         while (runtime.seconds() < 1.5) {
-            MoveWinch(350);
+            MoveWinch(MotorPositions.WINCH_HOVER_POSITION);
         }
 
         runtime.reset();
