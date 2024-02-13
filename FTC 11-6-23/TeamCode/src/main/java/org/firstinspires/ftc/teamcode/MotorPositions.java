@@ -5,18 +5,20 @@ public class MotorPositions
 
     public static double MOVEMENT_SPEED = 1;
     
-    public static double BUCKET_UP_POSITION = 0.64;
-    public static double BUCKET_DOWN_POSITION = 0.94;
+    public static double BUCKET_UP_POSITION = 0.8;
+    public static double BUCKET_DOWN_POSITION = 0.55;
     
     public static double DRONE_START_POSITION = 0.7;
     public static double DRONE_LAUNCH_POSITION = 0.6;
     
 
     public static double WINCH_POWER = 0.75;
-    public static int WINCH_DOWN_POSITION = 100;
-    public static int WINCH_HOVER_POSITION = 200;
+    public static double FOLD_OUT_INTAKE__WINCH_POWER = 1;
+    public static double FOLD_OUT_INTAKE__WINCH_POSITION = 100;
+    public static int WINCH_DOWN_POSITION = 60;
+    public static int WINCH_HOVER_POSITION = 300;
     public static int WINCH_HALF_UP_POSITION = 650;
-    public static int WINCH_UP_POSITION = 1000;
+    public static int WINCH_UP_POSITION = 900;
     
     
     public static double MAX_ELEVATOR_POWER = 1;

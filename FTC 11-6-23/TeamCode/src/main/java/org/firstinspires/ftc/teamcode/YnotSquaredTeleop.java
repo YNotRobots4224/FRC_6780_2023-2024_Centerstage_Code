@@ -173,10 +173,6 @@ public class YnotSquaredTeleop extends OpMode {
         telemetry.addData("DroneServo", "%.2f", droneServo.getPosition());
         telemetry.addData("Elevator Running to", "%.2f", (double)targetElevatorPosition);
         telemetry.addData("Elevator Currently at", "%.2f", (double) elevatorMotor.getCurrentPosition());
-        int i = 0;
-        if (shouldWinchGoFullyUp) i = 0;
-        else i = 1;
-        telemetry.addData("Should Winch Go fully Up", "%.2f", (double) i);
     }
 
     /*
@@ -307,8 +303,14 @@ public class YnotSquaredTeleop extends OpMode {
                 leftWinchMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
                 rightWinchMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
-                leftWinchMotor.setPower(0.5);
-                rightWinchMotor.setPower(0.5);
+
+                if (targetWinchPosition == MotorPositions.FOLD_OUT_INTAKE__WINCH_POSITION)
+                {
+                    leftWinchMotor.setPower(MotorPositions.FOLD_OUT_INTAKE__WINCH_POWER);
+                    rightWinchMotor.setPower(MotorPositions.FOLD_OUT_INTAKE__WINCH_POWER);
+                }
+                leftWinchMotor.setPower(MotorPositions.WINCH_POWER);
+                rightWinchMotor.setPower(MotorPositions.WINCH_POWER);
 
                 if (!leftWinchMotor.isBusy()) {
                     // Stop all motion;
