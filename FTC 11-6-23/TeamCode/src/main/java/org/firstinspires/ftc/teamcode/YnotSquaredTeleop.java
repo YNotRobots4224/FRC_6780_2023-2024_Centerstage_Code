@@ -258,13 +258,11 @@ public class YnotSquaredTeleop extends OpMode {
                     targetElevatorPosition = MotorPositions.ELEVATOR_OUT3_POSITION;
                     elevatorPower = MotorPositions.MAX_ELEVATOR_POWER;
                 }
-            }
-
-
-            if (gamepad1.left_trigger > 0.5) {
-                targetElevatorPosition = MotorPositions.ELEVATOR_OUT3_POSITION;
-                bucketServo.setPosition(MotorPositions.BUCKET_UP_POSITION);
-                elevatorPower = MotorPositions.SLOW_ELEVATOR_POWER;
+                else if (gamepad1.left_trigger > 0.5) {
+                    targetElevatorPosition = MotorPositions.ELEVATOR_OUT3_POSITION;
+                    bucketServo.setPosition(MotorPositions.BUCKET_UP_POSITION);
+                    elevatorPower = MotorPositions.SLOW_ELEVATOR_POWER;
+                }
             }
 
             if (gamepad1.b) {
