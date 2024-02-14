@@ -349,16 +349,16 @@ public class YnotSquaredTeleop extends OpMode {
                         // turn intake off
                         intakeMotor.setPower(0);
                         isIntakeOn = false;
-                        if (targetWinchPosition != MotorPositions.WINCH_UP_POSITION) {
+                        bucketServo.setPosition(MotorPositions.BUCKET_UP_POSITION);
+                        if (!(targetWinchPosition > MotorPositions.WINCH_HOVER_POSITION)) {
                             targetWinchPosition = MotorPositions.WINCH_HOVER_POSITION;
                         }
                     } else {
                         // turn intake on
                         intakeMotor.setPower(0.75);
                         isIntakeOn = true;
-                        if (targetWinchPosition != MotorPositions.WINCH_UP_POSITION) {
-                            targetWinchPosition = MotorPositions.WINCH_DOWN_POSITION;
-                        }
+                        targetWinchPosition = MotorPositions.WINCH_DOWN_POSITION;
+                        bucketServo.setPosition(MotorPositions.BUCKET_INTAKE_POSITION);
                     }
                     isIntakePressed = true;
                 }
@@ -390,7 +390,7 @@ public class YnotSquaredTeleop extends OpMode {
 
             // Use gamepad left & right Bumpers to open and close the claw
             if (gamepad2.y)
-                bucketServo.setPosition(MotorPositions.BUCKET_UP_POSITION);
+                bucketServo.setPosition(MotorPositions.BUCKET_INTAKE_POSITION);
             else if (gamepad2.x)
                 bucketServo.setPosition(MotorPositions.BUCKET_DOWN_POSITION);
 
