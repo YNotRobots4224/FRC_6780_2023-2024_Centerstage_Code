@@ -66,12 +66,16 @@ public class YnotSquaredTeleop extends OpMode {
 
 
     // Drivers
+    private boolean isStartPressed = false;
     private boolean isEncoderDriverDriving = true;
+
+    // Bucket
+    public boolean isBucketDown = false;
+    public boolean isBucketPressed = false;
 
     // Intake
     public boolean isIntakeOn = false;
     public boolean isIntakePressed = false;
-
 
     // Winch
     public int targetWinchPosition;
@@ -187,28 +191,40 @@ public class YnotSquaredTeleop extends OpMode {
     {
         if (gamepad1.start)
         {
-            isEncoderDriverDriving = true;
+            if (!isStartPressed)
+            {
+                isEncoderDriverDriving = true;
+                isStartPressed = true;
 
-            // ENCODER
-            leftWinchMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-            leftWinchMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-
-            rightWinchMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-            rightWinchMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-
-            elevatorMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-            elevatorMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+                // ENCODER
+                leftWinchMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+                leftWinchMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+                
+                rightWinchMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+                rightWinchMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+                
+                elevatorMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+                elevatorMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+            }
         }
         else if (gamepad2.start)
         {
-            isEncoderDriverDriving = false;
+            if (!isStartPressed)
+            {
+                isEncoderDriverDriving = false;
+                isStartPressed = true;
 
 
-            leftWinchMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+                leftWinchMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
-            rightWinchMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+                rightWinchMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
-            elevatorMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+                elevatorMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+            }
+        }
+        else
+        {
+            isStartPressed = false;
         }
     }
 
@@ -233,11 +249,26 @@ public class YnotSquaredTeleop extends OpMode {
             backRightMotor.setPower(backRightPower);
 
             // Use gamepad left & right Bumpers to open and close the claw
-            if (gamepad1.y)
-                bucketServo.setPosition(MotorPositions.BUCKET_UP_POSITION);
-            else if (gamepad1.x)
-                bucketServo.setPosition(MotorPositions.BUCKET_DOWN_POSITION);
-
+            if (gamepad1.x)
+            {
+                if (!isBucketPressed)
+                {
+                    if (isBucketDown)
+                    {
+                        bucketServo.setPosition(MotorPositions.BUCKET_UP_POSITION);
+                    }
+                    else
+                    {
+                        bucketServo.setPosition(MotorPositions.BUCKET_DOWN_POSITION);
+                    }
+                    isBucketDown = !isBucketDown;
+                    isBucketPressed = true;
+                }
+                else
+                {
+                    isBucketPressed = false;
+                }
+            }
 
             if (leftWinchMotor.getCurrentPosition() > MotorPositions.WINCH_HALF_UP_POSITION - 50) {
                 if (gamepad1.dpad_down) // In
