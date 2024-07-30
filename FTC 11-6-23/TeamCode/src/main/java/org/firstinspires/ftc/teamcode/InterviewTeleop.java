@@ -52,10 +52,6 @@ import com.qualcomm.robotcore.hardware.Servo;
 public class InterviewTeleop extends OpMode {
 
     // Declare OpMode members.
-    public DcMotor frontLeftMotor = null;
-    public DcMotor frontRightMotor = null;
-    public DcMotor backLeftMotor = null;
-    public DcMotor backRightMotor = null;
     public DcMotor elevatorMotor = null;
     public DcMotor rightWinchMotor = null;
     public DcMotor leftWinchMotor = null;
@@ -66,12 +62,16 @@ public class InterviewTeleop extends OpMode {
 
 
     // Drivers
+    private boolean isStartPressed = false;
     private boolean isEncoderDriverDriving = true;
+
+    // Bucket
+    public boolean isBucketDown = false;
+    public boolean isBucketPressed = false;
 
     // Intake
     public boolean isIntakeOn = false;
     public boolean isIntakePressed = false;
-
 
     // Winch
     public int targetWinchPosition;
@@ -80,9 +80,9 @@ public class InterviewTeleop extends OpMode {
 
     // Elevator
     public int targetElevatorPosition;
-    public double elevatorPower = 1;
 
 
+    public double winchAndElevatorSlowSpeed;
 
     /*
      * Code to run ONCE when the driver hits INIT
@@ -91,10 +91,6 @@ public class InterviewTeleop extends OpMode {
     public void init() {
 
         // Define and Inited, most robots need the motor on one side to be ralize Motors
-        frontLeftMotor = hardwareMap.get(DcMotor.class, "front_left");
-        frontRightMotor = hardwareMap.get(DcMotor.class, "front_right");
-        backRightMotor = hardwareMap.get(DcMotor.class, "back_right");
-        backLeftMotor = hardwareMap.get(DcMotor.class, "back_left");
         elevatorMotor = hardwareMap.get(DcMotor.class, "elevator");
         leftWinchMotor = hardwareMap.get(DcMotor.class, "left_winch");
         rightWinchMotor = hardwareMap.get(DcMotor.class, "right_winch");
@@ -104,10 +100,6 @@ public class InterviewTeleop extends OpMode {
         // To drive forwareversed, because the axles point in opposite directions.
         // Pushing the left and right sticks forward MUST make robot go forward. So adjust these two lines based on your first test drive.
         // Note: The settings here assume direct drive on left and right wheels. Gear Reduction or 90 Deg drives may require direction flips
-        frontLeftMotor.setDirection(DcMotor.Direction.REVERSE);
-        frontRightMotor.setDirection(DcMotor.Direction.FORWARD);
-        backLeftMotor.setDirection(DcMotor.Direction.REVERSE);
-        backRightMotor.setDirection(DcMotor.Direction.FORWARD);
         leftWinchMotor.setDirection(DcMotor.Direction.REVERSE);
         elevatorMotor.setDirection(DcMotor.Direction.REVERSE);
 
@@ -149,7 +141,7 @@ public class InterviewTeleop extends OpMode {
      */
     @Override
     public void start() {
-        targetWinchPosition = MotorPositions.WINCH_HOVER_POSITION;
+        targetWinchPosition = MotorPositions.FOLD_OUT_INTAKE__WINCH_POSITION;
         targetElevatorPosition = MotorPositions.ELEVATOR_IN_POSITION;
         bucketServo.setPosition(MotorPositions.BUCKET_UP_POSITION);
         droneServo.setPosition(MotorPositions.DRONE_START_POSITION);
@@ -173,10 +165,6 @@ public class InterviewTeleop extends OpMode {
         telemetry.addData("DroneServo", "%.2f", droneServo.getPosition());
         telemetry.addData("Elevator Running to", "%.2f", (double)targetElevatorPosition);
         telemetry.addData("Elevator Currently at", "%.2f", (double) elevatorMotor.getCurrentPosition());
-        int i = 0;
-        if (shouldWinchGoFullyUp) i = 0;
-        else i = 1;
-        telemetry.addData("Should Winch Go fully Up", "%.2f", (double) i);
     }
 
     /*
@@ -191,67 +179,116 @@ public class InterviewTeleop extends OpMode {
     {
         if (gamepad1.start)
         {
-            isEncoderDriverDriving = true;
+            if (!isStartPressed)
+            {
+                isEncoderDriverDriving = true;
+                isStartPressed = true;
 
-            // ENCODER
-            leftWinchMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-            leftWinchMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+                // ENCODER
+                leftWinchMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+                leftWinchMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
-            rightWinchMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-            rightWinchMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+                rightWinchMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+                rightWinchMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
-            elevatorMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-            elevatorMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+                elevatorMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+                elevatorMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+            }
         }
         else if (gamepad2.start)
         {
-            isEncoderDriverDriving = false;
+            if (!isStartPressed)
+            {
+                isEncoderDriverDriving = false;
+                isStartPressed = true;
 
 
-            leftWinchMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+                leftWinchMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
-            rightWinchMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+                rightWinchMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
-            elevatorMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+                elevatorMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+            }
+        }
+        else
+        {
+            isStartPressed = false;
         }
     }
 
     private void RunDriver1Code() {
         if (isEncoderDriverDriving) {
 
-            // Use gamepad left & right Bumpers to open and close the claw
-            if (gamepad1.y)
-                bucketServo.setPosition(MotorPositions.BUCKET_UP_POSITION);
-            else if (gamepad1.x)
-                bucketServo.setPosition(MotorPositions.BUCKET_DOWN_POSITION);
+            if (gamepad1.left_trigger > 0.1)
+            {
+                winchAndElevatorSlowSpeed = gamepad1.left_trigger * MotorPositions.WINCH_AND_ELEVATOR_SLOW_SPEED_MODIFIER;
+            }
+            else
+            {
+                winchAndElevatorSlowSpeed = 0;
+            }
 
+
+            if (gamepad1.a && elevatorMotor.getCurrentPosition() < 200) {
+                if (!isIntakePressed) {
+                    if (isIntakeOn) {
+                        // turn intake off
+                        intakeMotor.setPower(0);
+                        isIntakeOn = false;
+                        bucketServo.setPosition(MotorPositions.BUCKET_UP_POSITION);
+                        if (!(targetWinchPosition > MotorPositions.WINCH_HOVER_POSITION)) {
+                            targetWinchPosition = MotorPositions.WINCH_HOVER_POSITION;
+                        }
+                    } else {
+                        // turn intake on
+                        intakeMotor.setPower(0.75);
+                        isIntakeOn = true;
+                        targetWinchPosition = MotorPositions.WINCH_DOWN_POSITION;
+                        bucketServo.setPosition(MotorPositions.BUCKET_INTAKE_POSITION);
+                    }
+                    isIntakePressed = true;
+                }
+            } else
+                isIntakePressed = false;
+
+
+            // Use gamepad left & right Bumpers to open and close the claw
+            if (gamepad1.x)
+            {
+                if (!isBucketPressed)
+                {
+                    if (isBucketDown)
+                    {
+                        bucketServo.setPosition(MotorPositions.BUCKET_UP_POSITION);
+                    }
+                    else
+                    {
+                        bucketServo.setPosition(MotorPositions.BUCKET_DOWN_POSITION);
+                    }
+                    isBucketDown = !isBucketDown;
+                    isBucketPressed = true;
+                }
+            }
+            else
+            {
+                isBucketPressed = false;
+            }
 
             if (leftWinchMotor.getCurrentPosition() > MotorPositions.WINCH_HALF_UP_POSITION - 50) {
                 if (gamepad1.dpad_down) // In
                 {
                     targetElevatorPosition = MotorPositions.ELEVATOR_IN_POSITION;
                     bucketServo.setPosition(MotorPositions.BUCKET_UP_POSITION);
-                    elevatorPower = MotorPositions.MAX_ELEVATOR_POWER;
                 } else if (gamepad1.dpad_left) // little out
                 {
                     targetElevatorPosition = MotorPositions.ELEVATOR_OUT1_POSITION;
-                    elevatorPower = MotorPositions.MAX_ELEVATOR_POWER;
                 } else if (gamepad1.dpad_up) // mid out
                 {
                     targetElevatorPosition = MotorPositions.ELEVATOR_OUT2_POSITION;
-                    elevatorPower = MotorPositions.MAX_ELEVATOR_POWER;
                 } else if (gamepad1.dpad_right) // Far out
                 {
                     targetElevatorPosition = MotorPositions.ELEVATOR_OUT3_POSITION;
-                    elevatorPower = MotorPositions.MAX_ELEVATOR_POWER;
                 }
-            }
-
-
-            if (gamepad1.left_trigger > 0.5) {
-                targetElevatorPosition = MotorPositions.ELEVATOR_OUT3_POSITION;
-                bucketServo.setPosition(MotorPositions.BUCKET_UP_POSITION);
-                elevatorPower = MotorPositions.SLOW_ELEVATOR_POWER;
             }
 
             if (gamepad1.b) {
@@ -290,8 +327,15 @@ public class InterviewTeleop extends OpMode {
                 leftWinchMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
                 rightWinchMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
-                leftWinchMotor.setPower(0.5);
-                rightWinchMotor.setPower(0.5);
+
+                leftWinchMotor.setPower(MotorPositions.WINCH_POWER - (winchAndElevatorSlowSpeed * MotorPositions.WINCH_POWER));
+                rightWinchMotor.setPower(MotorPositions.WINCH_POWER);
+
+                if (targetWinchPosition == MotorPositions.FOLD_OUT_INTAKE__WINCH_POSITION)
+                {
+                    leftWinchMotor.setPower(MotorPositions.FOLD_OUT_INTAKE__WINCH_POWER);
+                    rightWinchMotor.setPower(MotorPositions.FOLD_OUT_INTAKE__WINCH_POWER);
+                }
 
                 if (!leftWinchMotor.isBusy()) {
                     // Stop all motion;
@@ -312,7 +356,7 @@ public class InterviewTeleop extends OpMode {
                 // Turn On RUN_TO_POSITION
                 elevatorMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
-                elevatorMotor.setPower(elevatorPower);
+                elevatorMotor.setPower(MotorPositions.ELEVATOR_POWER - (winchAndElevatorSlowSpeed * MotorPositions.ELEVATOR_POWER));
 
                 if (!elevatorMotor.isBusy()) {
                     // Stop all motion;
@@ -322,29 +366,6 @@ public class InterviewTeleop extends OpMode {
                     elevatorMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
                 }
             }
-
-
-            if (gamepad1.a && elevatorMotor.getCurrentPosition() < 200) {
-                if (!isIntakePressed) {
-                    if (isIntakeOn) {
-                        // turn intake off
-                        intakeMotor.setPower(0);
-                        isIntakeOn = false;
-                        if (targetWinchPosition != MotorPositions.WINCH_UP_POSITION) {
-                            targetWinchPosition = MotorPositions.WINCH_HOVER_POSITION;
-                        }
-                    } else {
-                        // turn intake on
-                        intakeMotor.setPower(0.75);
-                        isIntakeOn = true;
-                        if (targetWinchPosition != MotorPositions.WINCH_UP_POSITION) {
-                            targetWinchPosition = MotorPositions.WINCH_DOWN_POSITION;
-                        }
-                    }
-                    isIntakePressed = true;
-                }
-            } else
-                isIntakePressed = false;
         }
     }
 
@@ -354,7 +375,7 @@ public class InterviewTeleop extends OpMode {
 
             // Use gamepad left & right Bumpers to open and close the claw
             if (gamepad2.y)
-                bucketServo.setPosition(MotorPositions.BUCKET_UP_POSITION);
+                bucketServo.setPosition(MotorPositions.BUCKET_INTAKE_POSITION);
             else if (gamepad2.x)
                 bucketServo.setPosition(MotorPositions.BUCKET_DOWN_POSITION);
 
@@ -401,6 +422,5 @@ public class InterviewTeleop extends OpMode {
             }
         }
     }
-
 
 }

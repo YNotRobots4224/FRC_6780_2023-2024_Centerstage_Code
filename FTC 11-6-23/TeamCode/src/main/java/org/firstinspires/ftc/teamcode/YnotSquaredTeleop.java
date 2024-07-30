@@ -29,6 +29,8 @@
 
 package org.firstinspires.ftc.teamcode;
 
+import android.view.InputDevice;
+
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -65,6 +67,13 @@ public class YnotSquaredTeleop extends OpMode {
     public Servo droneServo = null;
 
 
+
+    // Wheels
+    public double movementSpeed = 1;
+    public boolean isMovingSlow = false;
+    public boolean isSlowMovePressed = false;
+
+
     // Drivers
     private boolean isStartPressed = false;
     private boolean isEncoderDriverDriving = true;
@@ -84,9 +93,9 @@ public class YnotSquaredTeleop extends OpMode {
 
     // Elevator
     public int targetElevatorPosition;
-    public double elevatorPower = 1;
 
 
+    public double winchAndElevatorSlowSpeed;
 
     /*
      * Code to run ONCE when the driver hits INIT
@@ -153,7 +162,7 @@ public class YnotSquaredTeleop extends OpMode {
      */
     @Override
     public void start() {
-        targetWinchPosition = MotorPositions.WINCH_HALF_UP_POSITION;
+        targetWinchPosition = MotorPositions.FOLD_OUT_INTAKE__WINCH_POSITION;
         targetElevatorPosition = MotorPositions.ELEVATOR_IN_POSITION;
         bucketServo.setPosition(MotorPositions.BUCKET_UP_POSITION);
         droneServo.setPosition(MotorPositions.DRONE_START_POSITION);
@@ -230,9 +239,30 @@ public class YnotSquaredTeleop extends OpMode {
 
     private void RunDriver1Code() {
         if (isEncoderDriverDriving) {
-            double leftStickY = -gamepad1.left_stick_y * MotorPositions.MOVEMENT_SPEED; // Remember, Y stick value is reversed
-            double leftStickX = gamepad1.left_stick_x * 1.1 * MotorPositions.MOVEMENT_SPEED; // Counteract imperfect strafing
-            double rightStickX = gamepad1.right_stick_x * MotorPositions.MOVEMENT_SPEED;
+            if (gamepad1.left_bumper)
+            {
+                if (!isSlowMovePressed)
+                {
+                    isSlowMovePressed = true;
+                    isMovingSlow = !isMovingSlow;
+
+                    if (isMovingSlow) {
+                        movementSpeed = MotorPositions.SLOW_MOVEMENT_SPEED;
+                    }
+                    else
+                    {
+                        movementSpeed = MotorPositions.MOVEMENT_SPEED;
+                    }
+                }
+            }
+            else
+            {
+                isSlowMovePressed = false;
+            }
+
+            double leftStickY = -gamepad1.left_stick_y * movementSpeed; // Remember, Y stick value is reversed
+            double leftStickX = gamepad1.left_stick_x * 1.1 * movementSpeed; // Counteract imperfect strafing
+            double rightStickX = gamepad1.right_stick_x * movementSpeed;
 
             // Denominator is the largest motor power (absolute value) or 1
             // This ensures all the powers maintain the same ratio,
@@ -248,127 +278,16 @@ public class YnotSquaredTeleop extends OpMode {
             frontRightMotor.setPower(frontRightPower);
             backRightMotor.setPower(backRightPower);
 
-            // Use gamepad left & right Bumpers to open and close the claw
-            if (gamepad1.x)
+
+
+
+            if (gamepad1.left_trigger > 0.1)
             {
-                if (!isBucketPressed)
-                {
-                    if (isBucketDown)
-                    {
-                        bucketServo.setPosition(MotorPositions.BUCKET_UP_POSITION);
-                    }
-                    else
-                    {
-                        bucketServo.setPosition(MotorPositions.BUCKET_DOWN_POSITION);
-                    }
-                    isBucketDown = !isBucketDown;
-                    isBucketPressed = true;
-                }
-                else
-                {
-                    isBucketPressed = false;
-                }
+                winchAndElevatorSlowSpeed = gamepad1.left_trigger * MotorPositions.WINCH_AND_ELEVATOR_SLOW_SPEED_MODIFIER;
             }
-
-            if (leftWinchMotor.getCurrentPosition() > MotorPositions.WINCH_HALF_UP_POSITION - 50) {
-                if (gamepad1.dpad_down) // In
-                {
-                    targetElevatorPosition = MotorPositions.ELEVATOR_IN_POSITION;
-                    bucketServo.setPosition(MotorPositions.BUCKET_UP_POSITION);
-                    elevatorPower = MotorPositions.MAX_ELEVATOR_POWER;
-                } else if (gamepad1.dpad_left) // little out
-                {
-                    targetElevatorPosition = MotorPositions.ELEVATOR_OUT1_POSITION;
-                    elevatorPower = MotorPositions.MAX_ELEVATOR_POWER;
-                } else if (gamepad1.dpad_up) // mid out
-                {
-                    targetElevatorPosition = MotorPositions.ELEVATOR_OUT2_POSITION;
-                    elevatorPower = MotorPositions.MAX_ELEVATOR_POWER;
-                } else if (gamepad1.dpad_right) // Far out
-                {
-                    targetElevatorPosition = MotorPositions.ELEVATOR_OUT3_POSITION;
-                    elevatorPower = MotorPositions.MAX_ELEVATOR_POWER;
-                }
-                else if (gamepad1.left_trigger > 0.5) {
-                    targetElevatorPosition = MotorPositions.ELEVATOR_OUT3_POSITION;
-                    bucketServo.setPosition(MotorPositions.BUCKET_UP_POSITION);
-                    elevatorPower = MotorPositions.SLOW_ELEVATOR_POWER;
-                }
-            }
-
-            if (gamepad1.b) {
-                droneServo.setPosition(MotorPositions.DRONE_LAUNCH_POSITION);
-            }
-
-            if (gamepad1.right_trigger > 0.5) {
-                if (!isWinchPressed) {
-                    isWinchPressed = true;
-                    if (shouldWinchGoFullyUp) {
-                        shouldWinchGoFullyUp = false;
-                        targetWinchPosition = MotorPositions.WINCH_UP_POSITION;
-                    } else {
-                        shouldWinchGoFullyUp = true;
-                        targetWinchPosition = MotorPositions.WINCH_HALF_UP_POSITION;
-                    }
-                }
-            } else if (gamepad1.right_bumper) {
-                if (elevatorMotor.getCurrentPosition() < MotorPositions.ELEVATOR_IN_POSITION + 100) {
-                    // Use Right trigger and bumper to use the winch
-                    targetWinchPosition = MotorPositions.WINCH_HOVER_POSITION;
-                    isWinchPressed = false;
-                    shouldWinchGoFullyUp = false;
-                }
-            } else {
-                isWinchPressed = false;
-            }
-
-            // Winch Movement
+            else
             {
-                // Determine new target position, and pass to motor controller
-                leftWinchMotor.setTargetPosition(targetWinchPosition);
-                rightWinchMotor.setTargetPosition(targetWinchPosition);
-
-                // Turn On RUN_TO_POSITION
-                leftWinchMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-                rightWinchMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-
-
-                if (targetWinchPosition == MotorPositions.FOLD_OUT_INTAKE__WINCH_POSITION)
-                {
-                    leftWinchMotor.setPower(MotorPositions.FOLD_OUT_INTAKE__WINCH_POWER);
-                    rightWinchMotor.setPower(MotorPositions.FOLD_OUT_INTAKE__WINCH_POWER);
-                }
-                leftWinchMotor.setPower(MotorPositions.WINCH_POWER);
-                rightWinchMotor.setPower(MotorPositions.WINCH_POWER);
-
-                if (!leftWinchMotor.isBusy()) {
-                    // Stop all motion;
-                    leftWinchMotor.setPower(0);
-                    rightWinchMotor.setPower(0);
-
-                    // Turn off RUN_TO_POSITION
-                    leftWinchMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-                    rightWinchMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-                }
-            }
-
-            // Elevator Movement
-            {
-                // Determine new target position, and pass to motor controller
-                elevatorMotor.setTargetPosition(targetElevatorPosition);
-
-                // Turn On RUN_TO_POSITION
-                elevatorMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-
-                elevatorMotor.setPower(elevatorPower);
-
-                if (!elevatorMotor.isBusy()) {
-                    // Stop all motion;
-                    elevatorMotor.setPower(0);
-
-                    // Turn off RUN_TO_POSITION
-                    elevatorMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-                }
+                winchAndElevatorSlowSpeed = 0;
             }
 
 
@@ -393,6 +312,123 @@ public class YnotSquaredTeleop extends OpMode {
                 }
             } else
                 isIntakePressed = false;
+
+
+            // Use gamepad left & right Bumpers to open and close the claw
+            if (gamepad1.x)
+            {
+                if (!isBucketPressed)
+                {
+                    if (isBucketDown)
+                    {
+                        bucketServo.setPosition(MotorPositions.BUCKET_UP_POSITION);
+                    }
+                    else
+                    {
+                        bucketServo.setPosition(MotorPositions.BUCKET_DOWN_POSITION);
+                    }
+                    isBucketDown = !isBucketDown;
+                    isBucketPressed = true;
+                }
+            }
+            else
+            {
+                isBucketPressed = false;
+            }
+
+            if (leftWinchMotor.getCurrentPosition() > MotorPositions.WINCH_HALF_UP_POSITION - 50) {
+                if (gamepad1.dpad_down) // In
+                {
+                    targetElevatorPosition = MotorPositions.ELEVATOR_IN_POSITION;
+                    bucketServo.setPosition(MotorPositions.BUCKET_UP_POSITION);
+                } else if (gamepad1.dpad_left) // little out
+                {
+                    targetElevatorPosition = MotorPositions.ELEVATOR_OUT1_POSITION;
+                } else if (gamepad1.dpad_up) // mid out
+                {
+                    targetElevatorPosition = MotorPositions.ELEVATOR_OUT2_POSITION;
+                } else if (gamepad1.dpad_right) // Far out
+                {
+                    targetElevatorPosition = MotorPositions.ELEVATOR_OUT3_POSITION;
+                }
+            }
+
+            if (gamepad1.b) {
+                droneServo.setPosition(MotorPositions.DRONE_LAUNCH_POSITION);
+            }
+
+            if (gamepad1.right_trigger > 0.5) {
+                if (!isWinchPressed) {
+                    isWinchPressed = true;
+                    if (shouldWinchGoFullyUp) {
+                        shouldWinchGoFullyUp = false;
+                        targetWinchPosition = MotorPositions.WINCH_UP_POSITION;
+                    } else {
+                        shouldWinchGoFullyUp = true;
+                        targetWinchPosition = MotorPositions.WINCH_HALF_UP_POSITION;
+                    }
+                }
+            } else if (gamepad1.right_bumper) {
+                if (elevatorMotor.getCurrentPosition() < MotorPositions.ELEVATOR_IN_POSITION + 100) {
+                    // Use Right trigger and bumper to use the winch
+                    targetWinchPosition = MotorPositions.WINCH_HOVER_POSITION;
+                    isWinchPressed = false;
+                    shouldWinchGoFullyUp = false;
+                    bucketServo.setPosition(MotorPositions.BUCKET_UP_POSITION);
+                }
+            } else {
+                isWinchPressed = false;
+            }
+
+            // Winch Movement
+            {
+                // Determine new target position, and pass to motor controller
+                leftWinchMotor.setTargetPosition(targetWinchPosition);
+                rightWinchMotor.setTargetPosition(targetWinchPosition);
+
+                // Turn On RUN_TO_POSITION
+                leftWinchMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                rightWinchMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+
+
+                leftWinchMotor.setPower(MotorPositions.WINCH_POWER - (winchAndElevatorSlowSpeed * MotorPositions.WINCH_POWER));
+                rightWinchMotor.setPower(MotorPositions.WINCH_POWER);
+
+                if (targetWinchPosition == MotorPositions.FOLD_OUT_INTAKE__WINCH_POSITION)
+                {
+                    leftWinchMotor.setPower(MotorPositions.FOLD_OUT_INTAKE__WINCH_POWER);
+                    rightWinchMotor.setPower(MotorPositions.FOLD_OUT_INTAKE__WINCH_POWER);
+                }
+
+                if (!leftWinchMotor.isBusy()) {
+                    // Stop all motion;
+                    leftWinchMotor.setPower(0);
+                    rightWinchMotor.setPower(0);
+
+                    // Turn off RUN_TO_POSITION
+                    leftWinchMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+                    rightWinchMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+                }
+            }
+
+            // Elevator Movement
+            {
+                // Determine new target position, and pass to motor controller
+                elevatorMotor.setTargetPosition(targetElevatorPosition);
+
+                // Turn On RUN_TO_POSITION
+                elevatorMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+
+                elevatorMotor.setPower(MotorPositions.ELEVATOR_POWER - (winchAndElevatorSlowSpeed * MotorPositions.ELEVATOR_POWER));
+
+                if (!elevatorMotor.isBusy()) {
+                    // Stop all motion;
+                    elevatorMotor.setPower(0);
+
+                    // Turn off RUN_TO_POSITION
+                    elevatorMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+                }
+            }
         }
     }
 

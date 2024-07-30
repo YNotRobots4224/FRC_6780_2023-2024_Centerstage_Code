@@ -54,9 +54,9 @@ import com.qualcomm.robotcore.util.ElapsedTime;
  * Remove or comment out the @Disabled line to add this OpMode to the Driver Station OpMode list
  */
 
-// @Autonomous(name="Score, Park left, Red Far", group="Robot")
+@Autonomous(name="Undo Intake", group="Robot")
 //@Disabled
-public class ScoreParkLeftRedFar extends LinearOpMode {
+public class UndoIntake extends LinearOpMode {
 
     /* Declare OpMode members. */
     private ElapsedTime     runtime = new ElapsedTime();
@@ -70,7 +70,7 @@ public class ScoreParkLeftRedFar extends LinearOpMode {
     public DcMotor rightWinchMotor = null;
     public DcMotor leftWinchMotor = null;
 
-    
+
     public Servo bucketServo = null;
 
 
@@ -118,7 +118,7 @@ public class ScoreParkLeftRedFar extends LinearOpMode {
         leftWinchMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         leftWinchMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         leftWinchMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-
+        
         rightWinchMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         rightWinchMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         rightWinchMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
@@ -143,85 +143,8 @@ public class ScoreParkLeftRedFar extends LinearOpMode {
         runtime.reset();
         MoveWinch(MotorPositions.FOLD_OUT_INTAKE__WINCH_POSITION);
 
-        while (runtime.seconds() < 15) {
-            bucketServo.setPosition(MotorPositions.BUCKET_UP_POSITION);
-        }
+        while (runtime.seconds() > 2);
 
-        runtime.reset();
-        while (runtime.seconds() < 0.1) {
-            MoveRobot(-1, 0, 0);
-        }
-        MoveRobot(0, 0, 0);
-
-        runtime.reset();
-        while (runtime.seconds() < 0.2) {
-
-        }
-
-        runtime.reset();
-        while (runtime.seconds() < 0.41) {
-            MoveRobot(0, 1, 0);
-        }
-        MoveRobot(0, 0, 0);
-
-        runtime.reset();
-        while (runtime.seconds() < 1) {
-
-        }
-
-        runtime.reset();
-        while (runtime.seconds() < 0.5) {
-            MoveRobot(-1, 0, 0);
-        }
-        MoveRobot(0, 0, 0);
-
-        runtime.reset();
-        while (runtime.seconds() < 0.2) {
-
-        }
-
-        runtime.reset();
-        while (runtime.seconds() < 1.5) {
-            MoveWinch(MotorPositions.WINCH_HALF_UP_POSITION);
-        }
-
-        runtime.reset();
-        while (runtime.seconds() < 2.5) {
-            MoveElevator(MotorPositions.ELEVATOR_OUT2_POSITION);
-        }
-
-        runtime.reset();
-        while (runtime.seconds() < 1.25) {
-            bucketServo.setPosition(MotorPositions.BUCKET_DOWN_POSITION);
-        }
-
-        runtime.reset();
-        while (runtime.seconds() < 2.5) {
-            bucketServo.setPosition(MotorPositions.BUCKET_UP_POSITION);
-            MoveElevator(0);
-        }
-        
-        runtime.reset();
-        while (runtime.seconds() < 1.5) {
-            MoveWinch(MotorPositions.WINCH_HOVER_POSITION);
-        }
-
-        runtime.reset();
-        while (runtime.seconds() < 0.375) {
-            MoveRobot(-1, 0, 0);
-        }
-        MoveRobot(0, 0, 0);
-
-        runtime.reset();
-        while (runtime.seconds() < 0.3) {
-            MoveRobot(0, 1, 0);
-        }
-        MoveRobot(0, 0, 0);
-
-        runtime.reset();
-        while (runtime.seconds() < 0.5) {
-        }
-        
         MoveWinch(0);
         frontLeftMotor.setPower(0);
         backLeftMotor.setPower(0);
@@ -231,7 +154,6 @@ public class ScoreParkLeftRedFar extends LinearOpMode {
         sleep(30000);
     }
 
-    
     private void MoveRobot(double movementX, double movementZ, double rotationY)
     {
         // Denominator is the largest motor power (absolute value) or 1
@@ -283,7 +205,7 @@ public class ScoreParkLeftRedFar extends LinearOpMode {
         // Turn On RUN_TO_POSITION
         elevatorMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
-        elevatorMotor.setPower(0);
+        elevatorMotor.setPower(1);
 
 
         if (!elevatorMotor.isBusy()) {
@@ -294,5 +216,4 @@ public class ScoreParkLeftRedFar extends LinearOpMode {
             elevatorMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         }
     }
-    
 }

@@ -137,7 +137,7 @@ public class ScoreParkRightRedClose extends LinearOpMode {
         waitForStart();
 
         runtime.reset();
-        MoveWinch(MotorPositions.WINCH_HOVER_POSITION);
+        MoveWinch(MotorPositions.FOLD_OUT_INTAKE__WINCH_POSITION);
 
         while (runtime.seconds() < 2) {
             bucketServo.setPosition(MotorPositions.BUCKET_UP_POSITION);
@@ -253,8 +253,14 @@ public class ScoreParkRightRedClose extends LinearOpMode {
         rightWinchMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         leftWinchMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
-        rightWinchMotor.setPower(MotorPositions.WINCH_POWER);
         leftWinchMotor.setPower(MotorPositions.WINCH_POWER);
+        rightWinchMotor.setPower(MotorPositions.WINCH_POWER);
+
+        if (targetWinchPosition == MotorPositions.FOLD_OUT_INTAKE__WINCH_POSITION)
+        {
+            leftWinchMotor.setPower(MotorPositions.FOLD_OUT_INTAKE__WINCH_POWER);
+            rightWinchMotor.setPower(MotorPositions.FOLD_OUT_INTAKE__WINCH_POWER);
+        }
 
         if (!leftWinchMotor.isBusy()) {
             // Stop all motion;
