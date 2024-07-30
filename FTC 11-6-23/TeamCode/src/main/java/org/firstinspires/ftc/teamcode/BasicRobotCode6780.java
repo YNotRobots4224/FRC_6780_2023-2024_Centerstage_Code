@@ -74,9 +74,9 @@ public class BasicRobotCode6780 extends OpMode
     private static final double INTAKE_SPEED = 0.5;
     private static final double WINCH_SPEED = 0.5;
     private static final double ELEVATOR_SPEED = 0.75;
-    private static final double BUCKET_DOWN_POSITION = 1;
-    private static final double BUCKET_FLAT_POSITION = 0.85;
-    private static final double BUCKET_UP_POSITION = 0.6;
+    private static final double BUCKET_DOWN_POSITION = 0.75;
+    private static final double BUCKET_FLAT_POSITION = 0.475;
+    private static final double BUCKET_UP_POSITION = 0.35;
     private static final double DRONRE_LAUNCH_POSITION = 1;
 
     // ====================================================================================================================================================================
@@ -169,6 +169,20 @@ public class BasicRobotCode6780 extends OpMode
         if (gamepad1.b)
         {
             droneServo.setPosition(DRONRE_LAUNCH_POSITION);
+        }
+
+        if (gamepad1.dpad_down)
+        {
+            bucketServo.setPosition(BUCKET_DOWN_POSITION);
+        }
+        else if (gamepad1.dpad_left || gamepad1.dpad_right)
+        {
+            bucketServo.setPosition(BUCKET_FLAT_POSITION);
+        }
+        else  if (gamepad1.dpad_up)
+        {
+            bucketServo.setPosition(BUCKET_UP_POSITION);
+
         }
 
 
