@@ -400,15 +400,6 @@ public class YnotSquaredTeleop extends OpMode {
                     rightWinchMotor.setPower(MotorPositions.FOLD_OUT_INTAKE__WINCH_POWER);
                 }
 
-                if (!leftWinchMotor.isBusy()) {
-                    // Stop all motion;
-                    leftWinchMotor.setPower(0);
-                    rightWinchMotor.setPower(0);
-
-                    // Turn off RUN_TO_POSITION
-                    leftWinchMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-                    rightWinchMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-                }
             }
 
             // Elevator Movement
